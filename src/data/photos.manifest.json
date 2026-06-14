@@ -13,27 +13,27 @@
     { "key": "pluton", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pluto in True Color - High-Res.jpg?width=900", "credit": "📷 NASA/JHUAPL/SwRI (New Horizons) · dominio público", "license": "PD" },
     { "key": "ceres", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ceres - RC3 - Haulani Crater (22381131691).jpg?width=900", "credit": "📷 NASA/JPL (Dawn) · dominio público", "license": "PD" },
 
-    { "key": "trex-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex AMNH 5027.jpg?width=900", "credit": "📷 Esqueleto, AMNH · Wikimedia Commons", "license": "verify" },
+    { "key": "trex-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus skeleton.jpg?width=900", "credit": "📷 Esqueleto de T. rex · Wikimedia Commons", "license": "verify" },
     { "key": "trex-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex by durbed.jpg?width=900", "credit": "🎨 Reconstrucción: Durbed · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
 
     { "key": "triceratops-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops AMNH 01.jpg?width=900", "credit": "📷 Esqueleto, AMNH · Wikimedia Commons", "license": "verify" },
-    { "key": "triceratops-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops prorsus.png?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+    { "key": "triceratops-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops horridus.png?width=900", "credit": "🎨 Reconstrucción de Triceratops · Wikimedia Commons", "license": "verify" },
 
-    { "key": "plateosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus skeleton.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
-    { "key": "plateosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus engelhardti life restoration.jpg?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+    { "key": "plateosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus engelhardti Tubingen.JPG?width=900", "credit": "📷 Esqueleto de Plateosaurus, Tubinga · Wikimedia Commons", "license": "verify" },
+    { "key": "plateosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus DB.jpg?width=900", "credit": "🎨 Reconstrucción: Dmitry Bogdanov · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
 
-    { "key": "brachiosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus altithorax skeleton.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "brachiosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/FMNH Brachiosaurus.JPG?width=900", "credit": "📷 Esqueleto de Brachiosaurus, Field Museum · Wikimedia Commons", "license": "verify" },
     { "key": "brachiosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus DB.jpg?width=900", "credit": "🎨 Reconstrucción: Dmitry Bogdanov · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
 
     { "key": "stegosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus Senckenberg.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
-    { "key": "stegosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus stenops sophie.jpg?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+    { "key": "stegosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/202009 Stegosaurus stenops.png?width=900", "credit": "🎨 Reconstrucción de Stegosaurus · Wikimedia Commons", "license": "verify" },
 
-    { "key": "pteranodon-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mount.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "pteranodon-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon skeleton.JPG?width=900", "credit": "📷 Esqueleto de Pteranodon · Wikimedia Commons", "license": "verify" },
     { "key": "pteranodon-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900", "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
 
     { "key": "corazon", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Diagram of the human heart (cropped).svg?width=700", "credit": "🎨 Diagrama del corazón · Wikimedia Commons · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
-    { "key": "pulmones", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plastic Anatomical Model of Lungs.jpg?width=800", "credit": "📷 Modelo de pulmones · Wikimedia Commons", "license": "verify" },
-    { "key": "cerebro", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human brain - upper view.jpg?width=800", "credit": "📷 Cerebro humano · Wikimedia Commons", "license": "verify" },
+    { "key": "pulmones", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Lungs diagram simple.svg?width=800", "credit": "🎨 Diagrama de pulmones: Patrick J. Lynch · CC BY 2.5", "license": "CC-BY-2.5" },
+    { "key": "cerebro", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human brain.png?width=800", "credit": "🎨 Cerebro humano · Wikimedia Commons", "license": "verify" },
     { "key": "estomago", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stomach diagram.svg?width=700", "credit": "🎨 Diagrama del estómago · Wikimedia Commons", "license": "verify" },
     { "key": "huesos", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human skeleton front en.svg?width=600", "credit": "🎨 Esqueleto humano · Wikimedia Commons · CC BY-SA", "license": "CC-BY-SA" }
   ]
