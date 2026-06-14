@@ -1,0 +1,34 @@
+{
+  "_comment": "Fuentes de las fotos reales que se empaquetan en la app. Ejecuta `node scripts/fetch-photos.mjs` (con conexión) para descargarlas a src/assets/photos/<key>.<ext>. Las URLs usan Wikimedia Special:FilePath; si alguna falla, el script lo indica y solo hay que corregir esa entrada. key = id del astro, o `<idDino>-fossil` / `<idDino>-life`.",
+  "images": [
+    { "key": "sol", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Sun920607.jpg?width=900", "credit": "📷 NASA/NSO · dominio público", "license": "PD" },
+    { "key": "mercurio", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mercury in true color.jpg?width=900", "credit": "📷 NASA/MESSENGER · dominio público", "license": "PD" },
+    { "key": "venus", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Venus globe.jpg?width=900", "credit": "📷 NASA/Magellan · dominio público", "license": "PD" },
+    { "key": "tierra", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/The Earth seen from Apollo 17.jpg?width=900", "credit": "📷 NASA (Apollo 17) · dominio público", "license": "PD" },
+    { "key": "marte", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/OSIRIS Mars true color.jpg?width=900", "credit": "📷 ESA/Rosetta (OSIRIS) · CC BY-SA 3.0 IGO", "license": "CC-BY-SA-3.0-IGO" },
+    { "key": "jupiter", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Jupiter by Cassini-Huygens.jpg?width=900", "credit": "📷 NASA/JPL (Cassini) · dominio público", "license": "PD" },
+    { "key": "saturno", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Saturn during Equinox.jpg?width=900", "credit": "📷 NASA/JPL (Cassini) · dominio público", "license": "PD" },
+    { "key": "urano", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Uranus2.jpg?width=900", "credit": "📷 NASA/JPL (Voyager 2) · dominio público", "license": "PD" },
+    { "key": "neptuno", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Neptune Full.jpg?width=900", "credit": "📷 NASA/JPL (Voyager 2) · dominio público", "license": "PD" },
+    { "key": "pluton", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pluto in True Color - High-Res.jpg?width=900", "credit": "📷 NASA/JHUAPL/SwRI (New Horizons) · dominio público", "license": "PD" },
+    { "key": "ceres", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ceres - RC3 - Haulani Crater (22381131691).jpg?width=900", "credit": "📷 NASA/JPL (Dawn) · dominio público", "license": "PD" },
+
+    { "key": "trex-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex AMNH 5027.jpg?width=900", "credit": "📷 Esqueleto, AMNH · Wikimedia Commons", "license": "verify" },
+    { "key": "trex-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex by durbed.jpg?width=900", "credit": "🎨 Reconstrucción: Durbed · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
+
+    { "key": "triceratops-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops AMNH 01.jpg?width=900", "credit": "📷 Esqueleto, AMNH · Wikimedia Commons", "license": "verify" },
+    { "key": "triceratops-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops prorsus.png?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+
+    { "key": "plateosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus skeleton.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "plateosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus engelhardti life restoration.jpg?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+
+    { "key": "brachiosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus altithorax skeleton.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "brachiosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus DB.jpg?width=900", "credit": "🎨 Reconstrucción: Dmitry Bogdanov · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
+
+    { "key": "stegosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus Senckenberg.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "stegosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus stenops sophie.jpg?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
+
+    { "key": "pteranodon-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mount.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
+    { "key": "pteranodon-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900", "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" }
+  ]
+}

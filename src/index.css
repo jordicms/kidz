@@ -536,6 +536,38 @@ body {
   }
 }
 
+/* ---------- Foto real en las fichas ---------- */
+.photo-card {
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.photo-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: cover;
+  background: #0a0c1a;
+}
+
+.photo-card figcaption {
+  padding: 7px 12px 9px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.photo-card .photo-label {
+  display: inline-block;
+  font-weight: 800;
+  color: var(--text);
+  margin-right: 6px;
+}
+
 /* ---------- Dinosaurios ---------- */
 .era-pill {
   font-style: normal;

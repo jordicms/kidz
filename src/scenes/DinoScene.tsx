@@ -12,6 +12,8 @@ import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
 import FactsGrid from '../components/ui/FactsGrid';
+import PhotoCard from '../components/ui/PhotoCard';
+import { getPhoto } from '../utils/photos';
 
 function TurntableDino({ dino }: { dino: Dino }) {
   const ref = useRef<THREE.Group>(null);
@@ -108,6 +110,14 @@ export default function DinoScene() {
 
         <StoryPager story={dino.story} storyKey={dino.id} />
         <FactsGrid facts={dino.facts} />
+
+        {(getPhoto(`${dino.id}-fossil`) || getPhoto(`${dino.id}-life`)) && (
+          <>
+            <div className="section-title">📷 ¿Cómo es en realidad?</div>
+            <PhotoCard photoKey={`${dino.id}-fossil`} label="Fósil / esqueleto" />
+            <PhotoCard photoKey={`${dino.id}-life`} label="Reconstrucción" />
+          </>
+        )}
 
         <div className="section-title">📏 ¿Cómo de grande era?</div>
         <SizeCompare dino={dino} />
