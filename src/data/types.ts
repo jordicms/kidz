@@ -61,6 +61,8 @@ export interface SceneConfig {
   /** Ángulo inicial en la órbita para que no salgan alineados. */
   phase?: number;
   rings?: { inner: number; outer: number; color: string; opacity?: number };
+  /** Halo atmosférico (reborde Fresnel) para planetas con atmósfera. */
+  atmosphere?: { color: string; intensity?: number };
 }
 
 export interface Body {

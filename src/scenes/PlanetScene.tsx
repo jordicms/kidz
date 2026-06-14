@@ -5,7 +5,10 @@ import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { getBody } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
+import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
+import Effects from '../components/three/Effects';
+import { AdaptiveQuality } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
 import FactsGrid from '../components/ui/FactsGrid';
 
@@ -65,6 +68,7 @@ function DetailMoon({ moon, scale }: { moon: Moon; scale: number }) {
 
 export default function PlanetScene() {
   const bodyId = useApp((s) => s.bodyId);
+  const quality = useApp((s) => s.quality);
   const [interior, setInterior] = useState(false);
   const body = bodyId ? getBody(bodyId) : undefined;
   if (!body) return null;
@@ -77,9 +81,13 @@ export default function PlanetScene() {
     <div className="planet-layout">
       <div className="planet-3d">
         <div className="scene-canvas" style={{ pointerEvents: 'auto' }}>
-          <Canvas camera={{ position: [0, 1.6, 7.5], fov: 50 }} dpr={[1, 2]}>
+          <Canvas
+            camera={{ position: [0, 1.6, 7.5], fov: 50 }}
+            dpr={quality.dpr}
+            gl={{ antialias: quality.antialias }}
+          >
             <color attach="background" args={['#05060f']} />
-            <Stars radius={120} depth={40} count={2500} factor={4} saturation={0} fade />
+            <Stars radius={120} depth={40} count={scaleCount(2500, quality, 600)} factor={4} saturation={0} fade />
             <ambientLight intensity={interior ? 0.9 : 0.45} />
             <directionalLight position={[8, 4, 6]} intensity={isSun ? 0.4 : 2.2} color="#fff2d5" />
             {interior ? (
@@ -93,6 +101,8 @@ export default function PlanetScene() {
               </>
             )}
             <OrbitControls enablePan={false} minDistance={4} maxDistance={16} />
+            <AdaptiveQuality />
+            <Effects />
           </Canvas>
         </div>
         <div

@@ -295,16 +295,31 @@ export function createRingTexture(id: string, color: string): THREE.Texture {
   return texture;
 }
 
-/** Sprite circular con degradado radial: brillos, halos, nubes de nebulosa... */
+/** Reduce el alfa de un color rgб()/rgba() para crear paradas intermedias suaves. */
+function fadeColor(color: string, factor: number): string {
+  const m = color.match(/rgba?\(([^)]+)\)/);
+  if (!m) return color;
+  const parts = m[1].split(',').map((p) => p.trim());
+  const [r, g, b] = parts;
+  const a = parts[3] !== undefined ? parseFloat(parts[3]) : 1;
+  return `rgba(${r}, ${g}, ${b}, ${(a * factor).toFixed(3)})`;
+}
+
+/**
+ * Sprite circular con degradado radial: brillos, halos, nubes de nebulosa...
+ * Usa varias paradas para una caída suave (queda mejor con el bloom encima).
+ */
 export function createGlowTexture(key: string, inner: string, outer = 'rgba(0,0,0,0)'): THREE.Texture {
   const cacheKey = `glow:${key}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
-  const size = 256;
+  const size = 512;
   const { canvas, ctx } = makeCanvas(size, size);
   const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
   grad.addColorStop(0, inner);
+  grad.addColorStop(0.35, fadeColor(inner, 0.55));
+  grad.addColorStop(0.7, fadeColor(inner, 0.16));
   grad.addColorStop(1, outer);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
