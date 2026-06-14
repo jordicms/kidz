@@ -353,3 +353,63 @@ export function createAccretionTexture(): THREE.Texture {
   cache.set(cacheKey, texture);
   return texture;
 }
+
+/** Textura rocosa con cráteres para una luna, a partir de su color base. */
+export function createMoonTexture(id: string, color: string): THREE.Texture {
+  const key = `moon:${id}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const w = 512;
+  const h = 256;
+  const { canvas, ctx } = makeCanvas(w, h);
+  const rand = mulberry32(hashString(`moon${id}`));
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, w, h);
+  // Manchas (mares/tierras altas)
+  for (let i = 0; i < 90; i++) {
+    ctx.fillStyle = lerpColor(color, rand() > 0.5 ? '#ffffff' : '#000000', rand() * 0.28);
+    ctx.globalAlpha = 0.22;
+    ctx.beginPath();
+    ctx.arc(rand() * w, rand() * h, 8 + rand() * 42, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  drawCraters(ctx, w, h, 46, rand);
+  drawSpeckle(ctx, w, h, rand, 0.05);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.anisotropy = 4;
+  cache.set(key, texture);
+  return texture;
+}
+
+/** Textura moteada para una capa del interior de un astro (corteza, manto...). */
+export function createLayerTexture(key: string, color: string): THREE.Texture {
+  const cacheKey = `layer:${key}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const w = 256;
+  const h = 256;
+  const { canvas, ctx } = makeCanvas(w, h);
+  const rand = mulberry32(hashString(`layer${key}`));
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 130; i++) {
+    ctx.fillStyle = lerpColor(color, rand() > 0.5 ? '#ffffff' : '#000000', rand() * 0.32);
+    ctx.globalAlpha = 0.16;
+    ctx.beginPath();
+    ctx.arc(rand() * w, rand() * h, 6 + rand() * 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  drawSpeckle(ctx, w, h, rand, 0.06);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  cache.set(cacheKey, texture);
+  return texture;
+}
