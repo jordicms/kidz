@@ -1,10 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Sky } from '@react-three/drei';
 import { DINOS, ERA_COLORS, type Dino } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
+import { playRoar, roarPitchFor } from '../utils/sound';
 import DinoModel from '../components/three/DinoModel';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
@@ -29,45 +30,82 @@ function Tree({ position, scale }: { position: [number, number, number]; scale: 
   );
 }
 
-/** Dinosaurio paseando en círculo por la isla; al tocarlo se abre su ficha. */
-function WalkingDino({ dino }: { dino: Dino }) {
-  const group = useRef<THREE.Group>(null);
-  const angle = useRef(dino.scene.path.phase ?? 0);
-  const speed = useApp((s) => s.speed);
-  const openDino = useApp((s) => s.openDino);
+/** Registro compartido de posiciones para que el depredador "vea" a las presas. */
+type Registry = Map<string, { pos: THREE.Vector3; diet: Dino['diet'] }>;
 
-  useFrame((state, delta) => {
-    angle.current += dino.scene.path.speed * speed * delta * 0.18;
-    const r = dino.scene.path.radius;
-    const a = angle.current;
-    const g = group.current;
-    if (!g) return;
-    const baseH = dino.scene.path.height ?? 0;
-    // Los voladores cabecean suavemente arriba/abajo.
-    const h = baseH + (dino.fly ? Math.sin(state.clock.elapsedTime * 1.2) * 0.6 : 0);
-    g.position.set(Math.cos(a) * r, h, Math.sin(a) * r);
-    // Mira en la dirección del movimiento (tangente al círculo).
-    const sign = Math.sign(dino.scene.path.speed) || 1;
-    g.rotation.y = Math.atan2(-Math.sin(a) * sign, Math.cos(a) * sign);
-    // Ligera inclinación al volar.
-    g.rotation.z = dino.fly ? Math.sin(state.clock.elapsedTime * 1.2) * 0.12 : 0;
+const WALK_R = 15; // radio caminable de la isla
+const _dir = new THREE.Vector3();
+
+function clampToIsland(v: THREE.Vector3) {
+  const d = Math.hypot(v.x, v.z);
+  if (d > WALK_R) {
+    v.x *= WALK_R / d;
+    v.z *= WALK_R / d;
+  }
+}
+
+function pickWanderTarget(out: THREE.Vector3) {
+  const a = Math.random() * Math.PI * 2;
+  const r = 3 + Math.random() * 11;
+  out.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+}
+
+function lerpAngle(a: number, b: number, t: number) {
+  let diff = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
+  if (diff < -Math.PI) diff += Math.PI * 2;
+  return a + diff * t;
+}
+
+function nearestPrey(reg: Registry, selfId: string, pos: THREE.Vector3): THREE.Vector3 | null {
+  let best: THREE.Vector3 | null = null;
+  let bd = Infinity;
+  reg.forEach((e, id) => {
+    if (id === selfId || e.diet !== 'herbívoro') return;
+    const d = pos.distanceToSquared(e.pos);
+    if (d < bd) {
+      bd = d;
+      best = e.pos;
+    }
   });
+  return best;
+}
 
+function nearestThreat(reg: Registry, pos: THREE.Vector3, radius: number): THREE.Vector3 | null {
+  let best: THREE.Vector3 | null = null;
+  let bd = radius * radius;
+  reg.forEach((e) => {
+    if (e.diet !== 'carnívoro') return;
+    const d = pos.distanceToSquared(e.pos);
+    if (d < bd) {
+      bd = d;
+      best = e.pos;
+    }
+  });
+  return best;
+}
+
+/** Parte visual común: el modelo (interactivo) y la etiqueta con su era. */
+function DinoVisual({ dino, moving }: { dino: Dino; moving: boolean }) {
+  const openDino = useApp((s) => s.openDino);
+  const tap = () => {
+    playRoar(roarPitchFor(dino.heightM));
+    openDino(dino.id);
+  };
   return (
-    <group ref={group}>
+    <>
       <group
         scale={dino.scene.scale}
         onClick={(e) => {
           e.stopPropagation();
-          openDino(dino.id);
+          tap();
         }}
         onPointerOver={() => (document.body.style.cursor = 'pointer')}
         onPointerOut={() => (document.body.style.cursor = 'auto')}
       >
-        <DinoModel dino={dino} moving={speed > 0} />
+        <DinoModel dino={dino} moving={moving} />
       </group>
       <Html center position={[0, dino.heightM * dino.scene.scale + 0.8, 0]} zIndexRange={[5, 0]}>
-        <div className="body-label" onClick={() => openDino(dino.id)}>
+        <div className="body-label" onClick={tap}>
           <span className="chip">
             {dino.emoji} {dino.name.split(' ')[0]}
             <i className="era-pill" style={{ background: ERA_COLORS[dino.era] }}>
@@ -76,8 +114,135 @@ function WalkingDino({ dino }: { dino: Dino }) {
           </span>
         </div>
       </Html>
+    </>
+  );
+}
+
+/** Volador: planea en círculo por el aire con cabeceo e inclinación. */
+function FlyingDino({ dino }: { dino: Dino }) {
+  const group = useRef<THREE.Group>(null);
+  const angle = useRef(dino.scene.path.phase ?? 0);
+  const speed = useApp((s) => s.speed);
+
+  useFrame((state, delta) => {
+    angle.current += dino.scene.path.speed * speed * delta * 0.18;
+    const r = dino.scene.path.radius;
+    const a = angle.current;
+    const g = group.current;
+    if (!g) return;
+    const h = (dino.scene.path.height ?? 0) + Math.sin(state.clock.elapsedTime * 1.2) * 0.6;
+    g.position.set(Math.cos(a) * r, h, Math.sin(a) * r);
+    const sign = Math.sign(dino.scene.path.speed) || 1;
+    g.rotation.y = Math.atan2(-Math.sin(a) * sign, Math.cos(a) * sign);
+    g.rotation.z = Math.sin(state.clock.elapsedTime * 1.2) * 0.12;
+  });
+
+  return (
+    <group ref={group}>
+      <DinoVisual dino={dino} moving={speed > 0} />
     </group>
   );
+}
+
+/** Terrestre con comportamiento: los herbívoros deambulan y pastan; si un
+ *  carnívoro se acerca, huyen. El carnívoro acecha a la presa más cercana. */
+function GroundDino({ dino, registry }: { dino: Dino; registry: Registry }) {
+  const group = useRef<THREE.Group>(null);
+  const speed = useApp((s) => s.speed);
+  const st = useRef({
+    pos: new THREE.Vector3(
+      Math.cos(dino.scene.path.phase ?? 0) * dino.scene.path.radius,
+      0,
+      Math.sin(dino.scene.path.phase ?? 0) * dino.scene.path.radius,
+    ),
+    heading: 0,
+    target: new THREE.Vector3(),
+    graze: 0,
+    retarget: 2 + Math.random() * 3,
+    tilt: 0,
+    moving: false,
+  });
+  // Objetivo inicial.
+  useState(() => pickWanderTarget(st.current.target));
+
+  const baseSpeed = Math.abs(dino.scene.path.speed) * 2.4 + 0.4;
+
+  function moveToward(target: THREE.Vector3, spd: number, dt: number): boolean {
+    const s = st.current;
+    _dir.copy(target).sub(s.pos);
+    _dir.y = 0;
+    const dist = _dir.length();
+    if (dist < 0.3) return true;
+    _dir.normalize();
+    s.pos.addScaledVector(_dir, Math.min(dist, spd * dt));
+    clampToIsland(s.pos);
+    s.heading = lerpAngle(s.heading, Math.atan2(_dir.x, _dir.z), 0.15);
+    return false;
+  }
+
+  useFrame((_, delta) => {
+    const g = group.current;
+    if (!g) return;
+    const s = st.current;
+    const dt = delta * speed;
+
+    let entry = registry.get(dino.id);
+    if (!entry) {
+      entry = { pos: new THREE.Vector3(), diet: dino.diet };
+      registry.set(dino.id, entry);
+    }
+    entry.pos.copy(s.pos);
+
+    s.moving = false;
+    if (speed > 0) {
+      if (dino.diet === 'carnívoro') {
+        const prey = nearestPrey(registry, dino.id, s.pos);
+        if (prey) {
+          s.target.copy(prey);
+          if (s.pos.distanceTo(prey) > 3) s.moving = !moveToward(prey, baseSpeed * 0.85, dt);
+          else s.heading = lerpAngle(s.heading, Math.atan2(prey.x - s.pos.x, prey.z - s.pos.z), 0.15);
+        }
+        s.tilt = THREE.MathUtils.lerp(s.tilt, 0, 0.1);
+      } else {
+        const threat = nearestThreat(registry, s.pos, 5);
+        if (threat) {
+          // Huye en dirección contraria al depredador.
+          s.target.copy(s.pos).addScaledVector(_dir.copy(s.pos).sub(threat).setY(0).normalize(), 6);
+          clampToIsland(s.target);
+          s.graze = 0;
+          s.tilt = THREE.MathUtils.lerp(s.tilt, 0, 0.2);
+          s.moving = !moveToward(s.target, baseSpeed * 1.9, dt);
+        } else if (s.graze > 0) {
+          s.graze -= delta;
+          s.tilt = THREE.MathUtils.lerp(s.tilt, 0.22, 0.08); // cabeza abajo, pastando
+        } else {
+          s.tilt = THREE.MathUtils.lerp(s.tilt, 0, 0.1);
+          const arrived = moveToward(s.target, baseSpeed, dt);
+          s.moving = !arrived;
+          s.retarget -= delta;
+          if (arrived || s.retarget <= 0) {
+            if (Math.random() < 0.5) s.graze = 2 + Math.random() * 2.5;
+            pickWanderTarget(s.target);
+            s.retarget = 4 + Math.random() * 4;
+          }
+        }
+      }
+    }
+
+    g.position.copy(s.pos);
+    g.rotation.y = s.heading;
+    g.rotation.x = s.tilt;
+  });
+
+  return (
+    <group ref={group}>
+      <DinoVisual dino={dino} moving={speed > 0} />
+    </group>
+  );
+}
+
+function DinoActor({ dino, registry }: { dino: Dino; registry: Registry }) {
+  return dino.fly ? <FlyingDino dino={dino} /> : <GroundDino dino={dino} registry={registry} />;
 }
 
 function Island() {
@@ -165,6 +330,7 @@ function Clouds() {
 
 export default function DinoIslandScene() {
   const quality = useApp((s) => s.quality);
+  const registry = useMemo<Registry>(() => new Map(), []);
   const trees = useMemo(() => {
     const n = scaleCount(16, quality, 6);
     return Array.from({ length: n }, (_, i) => {
@@ -207,7 +373,7 @@ export default function DinoIslandScene() {
           <Tree key={t.key} position={t.position} scale={t.scale} />
         ))}
         {DINOS.map((d) => (
-          <WalkingDino key={d.id} dino={d} />
+          <DinoActor key={d.id} dino={d} registry={registry} />
         ))}
         <OrbitControls
           enablePan={false}
