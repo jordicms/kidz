@@ -69,3 +69,30 @@ export function playRoar(base = 90): void {
   noise.connect(nGain).connect(lp);
   noise.start(now);
 }
+
+/** Un golpe grave y corto (para el "lub" y el "dub" del latido). */
+function thump(ac: AudioContext, freq: number, at: number, gain: number) {
+  const osc = ac.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, at);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.5, at + 0.12);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(gain, at + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+  osc.connect(g).connect(ac.destination);
+  osc.start(at);
+  osc.stop(at + 0.18);
+}
+
+/** Reproduce unos latidos "lub-dub" a las pulsaciones indicadas. */
+export function playHeartbeat(bpm = 90, beats = 3): void {
+  const ac = getCtx();
+  if (!ac) return;
+  const period = 60 / bpm;
+  for (let i = 0; i < beats; i++) {
+    const t = ac.currentTime + i * period;
+    thump(ac, 70, t, 0.6); // lub
+    thump(ac, 55, t + period * 0.28, 0.42); // dub
+  }
+}

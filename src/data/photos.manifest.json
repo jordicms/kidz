@@ -29,6 +29,8 @@
     { "key": "stegosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus stenops sophie.jpg?width=900", "credit": "🎨 Reconstrucción · Wikimedia Commons", "license": "verify" },
 
     { "key": "pteranodon-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mount.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
-    { "key": "pteranodon-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900", "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" }
+    { "key": "pteranodon-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900", "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
+
+    { "key": "corazon", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Diagram of the human heart (cropped).svg?width=700", "credit": "🎨 Diagrama del corazón · Wikimedia Commons · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" }
   ]
 }

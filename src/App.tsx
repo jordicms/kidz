@@ -6,6 +6,8 @@ import GalaxyScene from './scenes/GalaxyScene';
 import UniverseScene from './scenes/UniverseScene';
 import DinoIslandScene from './scenes/DinoIslandScene';
 import DinoScene from './scenes/DinoScene';
+import BodyScene from './scenes/BodyScene';
+import OrganScene from './scenes/OrganScene';
 import DeepSpaceStory from './components/ui/DeepSpaceStory';
 import SceneTransition from './components/ui/SceneTransition';
 import { DINOS, ERA_COLORS, ERAS } from './data/dinos';
@@ -15,6 +17,7 @@ const TITLES = {
   galaxy: { title: '🌌 La Vía Láctea', hint: 'Nuestra galaxia, vista desde fuera' },
   universe: { title: '✨ El Universo', hint: 'Toca cada maravilla del cosmos' },
   'dino-island': { title: '🦖 La Isla de los Dinosaurios', hint: 'Toca un dinosaurio para conocerlo' },
+  body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
 } as const;
 
 /** Línea del tiempo: en qué era vivió cada dinosaurio de la isla. */
@@ -49,16 +52,17 @@ function SpeedButton() {
 
 function Hud() {
   const view = useApp((s) => s.view);
-  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, openDeepSpace } = useApp();
+  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, openDeepSpace } = useApp();
 
   if (view === 'home') return null;
 
-  const isDetail = view === 'planet' || view === 'dino';
+  const isDetail = view === 'planet' || view === 'dino' || view === 'organ';
   const back =
     view === 'planet' ? goSolar
     : view === 'galaxy' ? goSolar
     : view === 'universe' ? goGalaxy
     : view === 'dino' ? goDinoIsland
+    : view === 'organ' ? goBody
     : goHome;
   const showSpeed = view === 'solar' || view === 'dino-island';
 
@@ -116,6 +120,8 @@ export default function App() {
       {view === 'universe' && <UniverseScene />}
       {view === 'dino-island' && <DinoIslandScene />}
       {view === 'dino' && <DinoScene />}
+      {view === 'body' && <BodyScene />}
+      {view === 'organ' && <OrganScene />}
       <Hud />
       <DeepSpaceStory />
       <SceneTransition />
