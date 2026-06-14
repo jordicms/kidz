@@ -5,7 +5,10 @@ import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { UNIVERSE_OBJECTS } from '../data/deepSpace';
 import type { DeepSpaceObject } from '../data/types';
 import { useApp } from '../state/store';
+import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
+import Effects from '../components/three/Effects';
+import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
 import { GalaxyPoints } from './GalaxyScene';
 
 function GlowSprite({
@@ -24,7 +27,14 @@ function GlowSprite({
   const map = useMemo(() => createGlowTexture(textureKey, color), [textureKey, color]);
   return (
     <sprite scale={[scale, scale, 1]} position={position}>
-      <spriteMaterial map={map} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
+      <spriteMaterial
+        map={map}
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
     </sprite>
   );
 }
@@ -63,7 +73,7 @@ function PulsarVisual() {
     if (ref.current) ref.current.rotation.y += 3.5 * delta;
   });
   const beamMaterial = (
-    <meshBasicMaterial color="#9ff7ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+    <meshBasicMaterial color="#9ff7ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
   );
   return (
     <group rotation={[0, 0, 0.4]}>
@@ -79,7 +89,7 @@ function PulsarVisual() {
       </group>
       <mesh>
         <sphereGeometry args={[0.3, 24, 24]} />
-        <meshBasicMaterial color="#e8ffff" />
+        <meshBasicMaterial color="#e8ffff" toneMapped={false} />
       </mesh>
       <GlowSprite textureKey="pulsar-glow" color="rgba(120,240,255,0.9)" scale={2} />
     </group>
@@ -103,7 +113,7 @@ function ClusterVisual() {
         <group key={i} position={p}>
           <mesh>
             <sphereGeometry args={[0.14, 16, 16]} />
-            <meshBasicMaterial color="#cfe4ff" />
+            <meshBasicMaterial color="#cfe4ff" toneMapped={false} />
           </mesh>
           <GlowSprite textureKey="pleiades-glow" color="rgba(130,180,255,0.9)" scale={1.3} />
         </group>
@@ -124,7 +134,7 @@ function QuasarVisual() {
       {[1, -1].map((dir) => (
         <mesh key={dir} position={[0, dir * 2.1, 0]}>
           <cylinderGeometry args={[0.07, 0.18, 3.6, 12]} />
-          <meshBasicMaterial color="#d6b3ff" transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#d6b3ff" transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
         </mesh>
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
@@ -135,6 +145,7 @@ function QuasarVisual() {
           side={THREE.DoubleSide}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+          toneMapped={false}
         />
       </mesh>
       <GlowSprite textureKey="quasar-core" color="rgba(255,240,255,1)" scale={2.4} />
@@ -188,11 +199,24 @@ function UniverseObject({ obj, position }: { obj: DeepSpaceObject; position: [nu
 
 export default function UniverseScene() {
   const radius = 12;
+  const quality = useApp((s) => s.quality);
   return (
     <div className="scene-canvas">
-      <Canvas camera={{ position: [0, 6, 24], fov: 55 }} dpr={[1, 2]}>
+      <Canvas
+        camera={{ position: [0, 6, 24], fov: 55 }}
+        dpr={quality.dpr}
+        gl={{ antialias: quality.antialias }}
+      >
         <color attach="background" args={['#02030a']} />
-        <Stars radius={180} depth={80} count={6000} factor={4} saturation={0.4} fade speed={0.8} />
+        <Stars
+          radius={180}
+          depth={80}
+          count={scaleCount(6000, quality, 1200)}
+          factor={4}
+          saturation={0.4}
+          fade
+          speed={0.8}
+        />
         {UNIVERSE_OBJECTS.map((obj, i) => {
           const a = (i / UNIVERSE_OBJECTS.length) * Math.PI * 2;
           const y = (i % 2 === 0 ? 1 : -1) * 1.6;
@@ -204,7 +228,10 @@ export default function UniverseScene() {
             />
           );
         })}
+        <ShootingStars count={3} radius={60} />
         <OrbitControls enablePan={false} minDistance={8} maxDistance={45} autoRotate autoRotateSpeed={0.4} />
+        <AdaptiveQuality />
+        <Effects />
       </Canvas>
     </div>
   );

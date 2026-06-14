@@ -472,6 +472,70 @@ body {
   }
 }
 
+/* ---------- Transición entre escenas (salto al hiperespacio) ---------- */
+.scene-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.scene-transition.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(220, 232, 255, 0.95) 0%,
+    rgba(127, 179, 255, 0.45) 18%,
+    rgba(80, 60, 160, 0.18) 42%,
+    transparent 65%
+  );
+  animation: warp-zoom 0.7s ease-out;
+}
+
+.scene-transition.active::after {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.08) 0.4deg,
+    transparent 1.1deg
+  );
+  animation: warp-streaks 0.7s ease-out;
+}
+
+@keyframes warp-zoom {
+  0% {
+    transform: scale(0.15);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes warp-streaks {
+  0% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.2) rotate(10deg);
+    opacity: 0;
+  }
+}
+
 /* ---------- Vista planeta: panel lateral ---------- */
 .planet-layout {
   position: absolute;

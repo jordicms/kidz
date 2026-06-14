@@ -5,6 +5,7 @@ import PlanetScene from './scenes/PlanetScene';
 import GalaxyScene from './scenes/GalaxyScene';
 import UniverseScene from './scenes/UniverseScene';
 import DeepSpaceStory from './components/ui/DeepSpaceStory';
+import SceneTransition from './components/ui/SceneTransition';
 
 const TITLES = {
   solar: { title: '🪐 El Sistema Solar', hint: 'Toca un planeta para conocerlo' },
@@ -85,6 +86,7 @@ export default function App() {
       {view === 'universe' && <UniverseScene />}
       <Hud />
       <DeepSpaceStory />
+      <SceneTransition />
     </div>
   );
 }

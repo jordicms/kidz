@@ -3,7 +3,10 @@ import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { useApp } from '../state/store';
+import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
+import Effects from '../components/three/Effects';
+import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
 
 /** Genera las estrellas de una galaxia espiral. */
 export function generateGalaxy(
@@ -69,6 +72,7 @@ export function GalaxyPoints({
         opacity={0.9}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
+        toneMapped={false}
       />
     </points>
   );
@@ -103,10 +107,11 @@ function BlackHole() {
           side={THREE.DoubleSide}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+          toneMapped={false}
         />
       </mesh>
       <sprite scale={[3.2, 3.2, 1]}>
-        <spriteMaterial map={coreGlow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.7} />
+        <spriteMaterial map={coreGlow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.7} toneMapped={false} />
       </sprite>
       <Html center position={[0, 2.4, 0]} zIndexRange={[5, 0]}>
         <div className="body-label" onClick={() => openDeepSpace('sagitario-a')}>
@@ -138,7 +143,7 @@ function SunMarker() {
         <meshBasicMaterial color="#ffd166" />
       </mesh>
       <sprite scale={[1.4, 1.4, 1]}>
-        <spriteMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+        <spriteMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </sprite>
       <Html center position={[0, 1.1, 0]} zIndexRange={[5, 0]}>
         <div className="body-label" onClick={goSolar}>
@@ -149,28 +154,36 @@ function SunMarker() {
   );
 }
 
-function RotatingGalaxy() {
+function RotatingGalaxy({ count }: { count: number }) {
   const ref = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += 0.015 * delta;
   });
   return (
     <group ref={ref}>
-      <GalaxyPoints />
+      <GalaxyPoints count={count} />
     </group>
   );
 }
 
 export default function GalaxyScene() {
+  const quality = useApp((s) => s.quality);
   return (
     <div className="scene-canvas">
-      <Canvas camera={{ position: [0, 16, 26], fov: 55 }} dpr={[1, 2]}>
+      <Canvas
+        camera={{ position: [0, 16, 26], fov: 55 }}
+        dpr={quality.dpr}
+        gl={{ antialias: quality.antialias }}
+      >
         <color attach="background" args={['#03040b']} />
-        <Stars radius={200} depth={60} count={3000} factor={4} saturation={0} fade />
-        <RotatingGalaxy />
+        <Stars radius={200} depth={60} count={scaleCount(3000, quality, 600)} factor={4} saturation={0} fade />
+        <RotatingGalaxy count={scaleCount(22000, quality, 7000)} />
         <BlackHole />
         <SunMarker />
+        <ShootingStars count={2} radius={90} />
         <OrbitControls enablePan={false} minDistance={6} maxDistance={70} />
+        <AdaptiveQuality />
+        <Effects />
       </Canvas>
     </div>
   );

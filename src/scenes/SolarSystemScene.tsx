@@ -1,11 +1,26 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Line, OrbitControls, Stars } from '@react-three/drei';
 import { SUN, PLANETS, DWARF_PLANETS, ASTEROID_BELT } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
+import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
+import Effects from '../components/three/Effects';
+import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
+
+const _hoverTarget = new THREE.Vector3();
+
+/** Anima la escala de un grupo hacia un objetivo (feedback al pasar/tocar). */
+function useHoverScale(ref: RefObject<THREE.Group | null>, hovered: RefObject<boolean>) {
+  useFrame((_, delta) => {
+    if (!ref.current) return;
+    const target = hovered.current ? 1.12 : 1;
+    _hoverTarget.set(target, target, target);
+    ref.current.scale.lerp(_hoverTarget, 1 - Math.pow(0.001, delta));
+  });
+}
 
 function BodyLabel({ body, offsetY }: { body: Body; offsetY: number }) {
   const openBody = useApp((s) => s.openBody);
@@ -51,6 +66,8 @@ function OrbitingMoon({ moon, speedScale }: { moon: Moon; speedScale: number }) 
 function OrbitingBody({ body }: { body: Body }) {
   const orbitRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
+  const scaleRef = useRef<THREE.Group>(null);
+  const hovered = useRef(false);
   const angle = useRef(body.scene.phase ?? 0);
   const speed = useApp((s) => s.speed);
   const openBody = useApp((s) => s.openBody);
@@ -61,16 +78,24 @@ function OrbitingBody({ body }: { body: Body }) {
     orbitRef.current?.position.set(Math.cos(angle.current) * d, 0, Math.sin(angle.current) * d);
     if (spinRef.current) spinRef.current.rotation.y += body.scene.rotationSpeed * speed * delta;
   });
+  useHoverScale(scaleRef, hovered);
 
   return (
     <group ref={orbitRef} position={[body.scene.distance, 0, 0]}>
       <group
+        ref={scaleRef}
         onClick={(e) => {
           e.stopPropagation();
           openBody(body.id);
         }}
-        onPointerOver={() => (document.body.style.cursor = 'pointer')}
-        onPointerOut={() => (document.body.style.cursor = 'auto')}
+        onPointerOver={() => {
+          hovered.current = true;
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          hovered.current = false;
+          document.body.style.cursor = 'auto';
+        }}
       >
         <group ref={spinRef}>
           <CelestialBody body={body} />
@@ -96,13 +121,13 @@ function OrbitLine({ radius }: { radius: number }) {
   return <Line points={points} color="#5a6494" transparent opacity={0.35} lineWidth={1} />;
 }
 
-function AsteroidBelt() {
+function AsteroidBelt({ count }: { count: number }) {
   const ref = useRef<THREE.Group>(null);
   const speed = useApp((s) => s.speed);
   const matrices = useMemo(() => {
     const list: THREE.Matrix4[] = [];
     const dummy = new THREE.Object3D();
-    for (let i = 0; i < ASTEROID_BELT.count; i++) {
+    for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = ASTEROID_BELT.inner + Math.random() * (ASTEROID_BELT.outer - ASTEROID_BELT.inner);
       dummy.position.set(Math.cos(a) * r, (Math.random() - 0.5) * 0.8, Math.sin(a) * r);
@@ -113,7 +138,7 @@ function AsteroidBelt() {
       list.push(dummy.matrix.clone());
     }
     return list;
-  }, []);
+  }, [count]);
 
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += 0.012 * speed * delta;
@@ -122,7 +147,7 @@ function AsteroidBelt() {
   return (
     <group ref={ref}>
       <instancedMesh
-        args={[undefined, undefined, ASTEROID_BELT.count]}
+        args={[undefined, undefined, count]}
         ref={(mesh) => {
           if (!mesh) return;
           matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
@@ -138,23 +163,34 @@ function AsteroidBelt() {
 
 function Sun() {
   const spinRef = useRef<THREE.Group>(null);
+  const scaleRef = useRef<THREE.Group>(null);
+  const hovered = useRef(false);
   const speed = useApp((s) => s.speed);
   const openBody = useApp((s) => s.openBody);
   useFrame((_, delta) => {
     if (spinRef.current) spinRef.current.rotation.y += SUN.scene.rotationSpeed * speed * delta;
   });
+  useHoverScale(scaleRef, hovered);
   return (
     <group>
       <group
-        ref={spinRef}
+        ref={scaleRef}
         onClick={(e) => {
           e.stopPropagation();
           openBody(SUN.id);
         }}
-        onPointerOver={() => (document.body.style.cursor = 'pointer')}
-        onPointerOut={() => (document.body.style.cursor = 'auto')}
+        onPointerOver={() => {
+          hovered.current = true;
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          hovered.current = false;
+          document.body.style.cursor = 'auto';
+        }}
       >
-        <CelestialBody body={SUN} />
+        <group ref={spinRef}>
+          <CelestialBody body={SUN} />
+        </group>
       </group>
       <BodyLabel body={SUN} offsetY={SUN.scene.size + 1.2} />
       <pointLight intensity={2.4} decay={0} color="#fff2d5" />
@@ -164,12 +200,25 @@ function Sun() {
 
 export default function SolarSystemScene() {
   const bodies = [...PLANETS, ...DWARF_PLANETS];
+  const quality = useApp((s) => s.quality);
   return (
     <div className="scene-canvas">
-      <Canvas camera={{ position: [0, 32, 54], fov: 55 }} dpr={[1, 2]}>
+      <Canvas
+        camera={{ position: [0, 32, 54], fov: 55 }}
+        dpr={quality.dpr}
+        gl={{ antialias: quality.antialias }}
+      >
         <color attach="background" args={['#05060f']} />
         <ambientLight intensity={0.35} />
-        <Stars radius={220} depth={60} count={4000} factor={5} saturation={0} fade speed={0.6} />
+        <Stars
+          radius={220}
+          depth={60}
+          count={scaleCount(4000, quality, 800)}
+          factor={5}
+          saturation={0}
+          fade
+          speed={0.6}
+        />
         <Sun />
         {bodies.map((b) => (
           <OrbitLine key={`orbit-${b.id}`} radius={b.scene.distance} />
@@ -177,13 +226,16 @@ export default function SolarSystemScene() {
         {bodies.map((b) => (
           <OrbitingBody key={b.id} body={b} />
         ))}
-        <AsteroidBelt />
+        <AsteroidBelt count={scaleCount(ASTEROID_BELT.count, quality, 200)} />
+        <ShootingStars count={2} radius={140} />
         <OrbitControls
           enablePan={false}
           minDistance={8}
           maxDistance={120}
           maxPolarAngle={Math.PI * 0.85}
         />
+        <AdaptiveQuality />
+        <Effects />
       </Canvas>
     </div>
   );

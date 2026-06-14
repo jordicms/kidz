@@ -24,6 +24,18 @@ con Capacitor.
 Todo el contenido visual es **procedural** (texturas dibujadas en canvas):
 la app no descarga ninguna imagen y funciona 100% offline.
 
+## Efectos visuales y rendimiento
+
+- **Postprocesado** (`@react-three/postprocessing`): bloom + viñeta para que el
+  Sol, Sagitario A\*, el púlsar, el cuásar y las nebulosas irradien luz de verdad.
+- **Atmósferas** con reborde Fresnel en los planetas que la tienen.
+- **Transición** tipo "salto al hiperespacio" al cambiar de escena y feedback al
+  tocar los astros.
+- **Calidad adaptativa** (`src/utils/quality.ts`): detecta el dispositivo y regula
+  resolución, antialias, postprocesado y número de partículas; además un
+  `PerformanceMonitor` baja la calidad sola si caen los fps, para mantener la
+  fluidez en móvil. Se puede forzar un nivel con `?q=high|medium|low` (para QA).
+
 ## Desarrollo
 
 ```bash
