@@ -6,6 +6,7 @@ import { getDino, ERA_COLORS } from '../data/dinos';
 import type { Dino } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
+import { playRoar, roarPitchFor } from '../utils/sound';
 import DinoModel from '../components/three/DinoModel';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
@@ -95,6 +96,14 @@ export default function DinoScene() {
             </h2>
             <div className="tagline">{dino.tagline} · {dino.diet}</div>
           </div>
+          <button
+            className="btn btn-round story-close"
+            onClick={() => playRoar(roarPitchFor(dino.heightM))}
+            aria-label="Rugido"
+            title="¡Rugido!"
+          >
+            🔊
+          </button>
         </div>
 
         <StoryPager story={dino.story} storyKey={dino.id} />
