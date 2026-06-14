@@ -6,12 +6,14 @@ import {
   type QualityPreset,
 } from '../utils/quality';
 
-export type View = 'home' | 'solar' | 'planet' | 'galaxy' | 'universe';
+export type View = 'home' | 'solar' | 'planet' | 'galaxy' | 'universe' | 'dino-island' | 'dino';
 
 interface AppState {
   view: View;
   /** Cuerpo del sistema solar seleccionado (vista planeta). */
   bodyId: string | null;
+  /** Dinosaurio seleccionado (vista ficha). */
+  dinoId: string | null;
   /** Objeto de espacio profundo con su historia abierta. */
   deepSpaceId: string | null;
   /** Multiplicador de velocidad de la simulación. */
@@ -22,6 +24,8 @@ interface AppState {
   goSolar: () => void;
   goGalaxy: () => void;
   goUniverse: () => void;
+  goDinoIsland: () => void;
+  openDino: (id: string) => void;
   openBody: (id: string) => void;
   openDeepSpace: (id: string) => void;
   closeDeepSpace: () => void;
@@ -36,13 +40,16 @@ const SPEEDS = [1, 3, 0];
 export const useApp = create<AppState>((set) => ({
   view: 'home',
   bodyId: null,
+  dinoId: null,
   deepSpaceId: null,
   speed: 1,
   quality: detectPreset(),
-  goHome: () => set({ view: 'home', bodyId: null, deepSpaceId: null }),
+  goHome: () => set({ view: 'home', bodyId: null, dinoId: null, deepSpaceId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),
   goGalaxy: () => set({ view: 'galaxy', bodyId: null, deepSpaceId: null }),
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
+  goDinoIsland: () => set({ view: 'dino-island', dinoId: null, deepSpaceId: null }),
+  openDino: (id) => set({ view: 'dino', dinoId: id }),
   openBody: (id) => set({ view: 'planet', bodyId: id }),
   openDeepSpace: (id) => set({ deepSpaceId: id }),
   closeDeepSpace: () => set({ deepSpaceId: null }),
