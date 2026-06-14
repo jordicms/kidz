@@ -4,6 +4,7 @@ import SolarSystemScene from './scenes/SolarSystemScene';
 import PlanetScene from './scenes/PlanetScene';
 import GalaxyScene from './scenes/GalaxyScene';
 import UniverseScene from './scenes/UniverseScene';
+import BlackHoleScene from './scenes/BlackHoleScene';
 import DinoIslandScene from './scenes/DinoIslandScene';
 import DinoScene from './scenes/DinoScene';
 import BodyScene from './scenes/BodyScene';
@@ -17,6 +18,7 @@ const TITLES = {
   solar: { title: '🪐 El Sistema Solar', hint: 'Toca un planeta para conocerlo' },
   galaxy: { title: '🌌 La Vía Láctea', hint: 'Nuestra galaxia, vista desde fuera' },
   universe: { title: '✨ El Universo', hint: 'Toca cada maravilla del cosmos' },
+  blackhole: { title: '🕳️ Sagitario A*', hint: 'El agujero negro de la Vía Láctea' },
   'dino-island': { title: '🦖 La Isla de los Dinosaurios', hint: 'Toca un dinosaurio para conocerlo' },
   body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
 } as const;
@@ -62,6 +64,7 @@ function Hud() {
     view === 'planet' ? goSolar
     : view === 'galaxy' ? goSolar
     : view === 'universe' ? goGalaxy
+    : view === 'blackhole' ? goGalaxy
     : view === 'dino' ? goDinoIsland
     : view === 'organ' ? goBody
     : view === 'journey' ? goBody
@@ -120,6 +123,7 @@ export default function App() {
       {view === 'planet' && <PlanetScene />}
       {view === 'galaxy' && <GalaxyScene />}
       {view === 'universe' && <UniverseScene />}
+      {view === 'blackhole' && <BlackHoleScene />}
       {view === 'dino-island' && <DinoIslandScene />}
       {view === 'dino' && <DinoScene />}
       {view === 'body' && <BodyScene />}
