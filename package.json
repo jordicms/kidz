@@ -9,6 +9,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "photos": "node scripts/fetch-photos.mjs",
+    "models": "node scripts/fetch-models.mjs",
+    "textures": "node scripts/fetch-textures.mjs",
     "cap:sync": "npm run build && cap sync"
   },
   "dependencies": {

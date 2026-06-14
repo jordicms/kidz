@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import type { Body } from '../../data/types';
 import { createBodyTexture, createRingTexture, createGlowTexture } from '../../utils/textures';
+import { getSurfaceTextureUrl } from '../../utils/surfaceTextures';
 import Atmosphere from './Atmosphere';
 
 interface Props {
@@ -13,8 +14,30 @@ interface Props {
 /** Esfera con textura procedural, anillos e inclinación. El Sol además brilla. */
 export default function CelestialBody({ body, scale = 1 }: Props) {
   const size = body.scene.size * scale;
-  const texture = useMemo(() => createBodyTexture(body.id, body.texture), [body]);
+  const procedural = useMemo(() => createBodyTexture(body.id, body.texture), [body]);
   const isSun = body.kind === 'estrella';
+
+  // Si hay una textura real (mapa equirectangular) para este astro, se usa;
+  // si no, se mantiene la procedural. Carga asíncrona sin Suspense.
+  const [texture, setTexture] = useState<THREE.Texture>(procedural);
+  useEffect(() => {
+    const url = getSurfaceTextureUrl(body.id);
+    if (!url) {
+      setTexture(procedural);
+      return;
+    }
+    let alive = true;
+    new THREE.TextureLoader().load(url, (tex) => {
+      if (!alive) return;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 4;
+      tex.wrapS = THREE.RepeatWrapping;
+      setTexture(tex);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [body.id, procedural]);
 
   const glow = useMemo(
     () => (isSun ? createGlowTexture('sun-glow', 'rgba(255,200,80,0.9)') : null),

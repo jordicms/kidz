@@ -1,0 +1,16 @@
+{
+  "_comment": "Mapas de superficie (equirectangulares) de los astros. Ejecuta `npm run textures` para descargarlos a src/assets/textures/<id>.<ext>. La mayoría son de Solar System Scope (CC BY 4.0): hay que conservar la atribución (se genera CREDITS-textures.md). key = id del astro. Si alguna URL falla, el script lo indica.",
+  "textures": [
+    { "key": "sol", "url": "https://www.solarsystemscope.com/textures/download/2k_sun.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "mercurio", "url": "https://www.solarsystemscope.com/textures/download/2k_mercury.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "venus", "url": "https://www.solarsystemscope.com/textures/download/2k_venus_surface.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "tierra", "url": "https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "marte", "url": "https://www.solarsystemscope.com/textures/download/2k_mars.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "jupiter", "url": "https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "saturno", "url": "https://www.solarsystemscope.com/textures/download/2k_saturn.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "urano", "url": "https://www.solarsystemscope.com/textures/download/2k_uranus.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "neptuno", "url": "https://www.solarsystemscope.com/textures/download/2k_neptune.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "pluton", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pluto Equirectangular map.jpg?width=2048", "credit": "NASA/JHUAPL/SwRI (New Horizons) · dominio público", "license": "verify" },
+    { "key": "ceres", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ceres global map Dawn.jpg?width=2048", "credit": "NASA/JPL (Dawn) · dominio público", "license": "verify" }
+  ]
+}
