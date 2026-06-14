@@ -11,5 +11,7 @@ Descargadas con `scripts/fetch-textures.mjs`. Las de Solar System Scope son CC B
 - **saturno** — Solar System Scope (CC-BY-4.0)
 - **urano** — Solar System Scope (CC-BY-4.0)
 - **neptuno** — Solar System Scope (CC-BY-4.0)
+- **pluton** — NASA/JHUAPL/SwRI (New Horizons) · dominio público (verify)
+- **ceres** — Solar System Scope (textura de Ceres) (CC-BY-4.0)
 - **stars** — Solar System Scope (Vía Láctea) (CC-BY-4.0)
 - **saturno-rings** — Solar System Scope (anillos de Saturno) (CC-BY-4.0)
