@@ -91,6 +91,12 @@ export interface SceneConfig {
   distance: number;
   /** Velocidad orbital (radianes/segundo a velocidad ×1). */
   orbitSpeed: number;
+  /** Excentricidad de la órbita (0 = círculo). */
+  eccentricity?: number;
+  /** Giro de la elipse (orientación del perihelio), en radianes. */
+  periapsis?: number;
+  /** Inclinación de la órbita respecto al plano, en radianes. */
+  inclination?: number;
   /** Velocidad de rotación sobre sí mismo. */
   rotationSpeed: number;
   /** Inclinación del eje en radianes. */

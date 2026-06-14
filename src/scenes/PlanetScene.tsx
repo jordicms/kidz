@@ -7,6 +7,7 @@ import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { getPhoto } from '../utils/photos';
+import { createLayerTexture, createMoonTexture } from '../utils/textures';
 import CelestialBody from '../components/three/CelestialBody';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
@@ -36,7 +37,11 @@ function Cutaway({ body, scale }: { body: Body; scale: number }) {
       {body.layers.map((layer) => (
         <mesh key={layer.name}>
           <sphereGeometry args={[size * layer.radius, 48, 48, 0, CUT_ANGLE]} />
-          <meshStandardMaterial color={layer.color} roughness={0.85} side={THREE.DoubleSide} />
+          <meshStandardMaterial
+            map={createLayerTexture(`${body.id}-${layer.name}`, layer.color)}
+            roughness={0.85}
+            side={THREE.DoubleSide}
+          />
         </mesh>
       ))}
     </group>
@@ -55,7 +60,7 @@ function DetailMoon({ moon, scale }: { moon: Moon; scale: number }) {
     <group ref={ref}>
       <mesh>
         <sphereGeometry args={[moon.size * scale, 24, 24]} />
-        <meshStandardMaterial color={moon.color} roughness={1} />
+        <meshStandardMaterial map={createMoonTexture(moon.id, moon.color)} roughness={1} />
       </mesh>
       <Html center position={[0, moon.size * scale + 0.35, 0]} zIndexRange={[5, 0]}>
         <div className="body-label">

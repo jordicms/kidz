@@ -7,10 +7,35 @@ import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
+import { createMoonTexture } from '../utils/textures';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 const _hoverTarget = new THREE.Vector3();
+
+type SceneConf = Body['scene'];
+
+/** Radio orbital para un ángulo dado (elipse con el Sol en un foco). */
+function orbitRadius(s: SceneConf, theta: number): number {
+  const e = s.eccentricity ?? 0;
+  return (s.distance * (1 - e * e)) / (1 + e * Math.cos(theta));
+}
+
+/** Punto 3D de la órbita: elipse con giro del perihelio e inclinación. */
+function orbitPoint(s: SceneConf, theta: number): [number, number, number] {
+  const r = orbitRadius(s, theta);
+  let x = Math.cos(theta) * r;
+  let z = Math.sin(theta) * r;
+  const w = s.periapsis ?? 0;
+  if (w) {
+    const c = Math.cos(w);
+    const sn = Math.sin(w);
+    [x, z] = [x * c - z * sn, x * sn + z * c];
+  }
+  const inc = s.inclination ?? 0;
+  if (inc) return [x, z * Math.sin(inc), z * Math.cos(inc)];
+  return [x, 0, z];
+}
 
 /** Anima la escala de un grupo hacia un objetivo (feedback al pasar/tocar). */
 function useHoverScale(ref: RefObject<THREE.Group | null>, hovered: RefObject<boolean>) {
@@ -53,11 +78,12 @@ function OrbitingMoon({ moon, speedScale }: { moon: Moon; speedScale: number }) 
       Math.sin(angle.current) * moon.distance,
     );
   });
+  const texture = useMemo(() => createMoonTexture(moon.id, moon.color), [moon.id, moon.color]);
   return (
     <group ref={ref}>
       <mesh>
-        <sphereGeometry args={[moon.size, 16, 16]} />
-        <meshStandardMaterial color={moon.color} roughness={1} />
+        <sphereGeometry args={[moon.size, 20, 20]} />
+        <meshStandardMaterial map={texture} roughness={1} />
       </mesh>
     </group>
   );
@@ -73,9 +99,12 @@ function OrbitingBody({ body }: { body: Body }) {
   const openBody = useApp((s) => s.openBody);
 
   useFrame((_, delta) => {
-    angle.current += body.scene.orbitSpeed * speed * delta * 0.35;
-    const d = body.scene.distance;
-    orbitRef.current?.position.set(Math.cos(angle.current) * d, 0, Math.sin(angle.current) * d);
+    // Velocidad variable (2.ª ley de Kepler): más rápido cerca del Sol.
+    const r = orbitRadius(body.scene, angle.current);
+    const ratio = body.scene.distance / r;
+    angle.current += body.scene.orbitSpeed * speed * delta * 0.35 * ratio * ratio;
+    const [x, y, z] = orbitPoint(body.scene, angle.current);
+    orbitRef.current?.position.set(x, y, z);
     if (spinRef.current) spinRef.current.rotation.y += body.scene.rotationSpeed * speed * delta;
   });
   useHoverScale(scaleRef, hovered);
@@ -109,15 +138,14 @@ function OrbitingBody({ body }: { body: Body }) {
   );
 }
 
-function OrbitLine({ radius }: { radius: number }) {
+function OrbitLine({ scene }: { scene: SceneConf }) {
   const points = useMemo(() => {
     const pts: [number, number, number][] = [];
-    for (let i = 0; i <= 128; i++) {
-      const a = (i / 128) * Math.PI * 2;
-      pts.push([Math.cos(a) * radius, 0, Math.sin(a) * radius]);
+    for (let i = 0; i <= 160; i++) {
+      pts.push(orbitPoint(scene, (i / 160) * Math.PI * 2));
     }
     return pts;
-  }, [radius]);
+  }, [scene]);
   return <Line points={points} color="#5a6494" transparent opacity={0.35} lineWidth={1} />;
 }
 
@@ -222,7 +250,7 @@ export default function SolarSystemScene() {
         />
         <Sun />
         {bodies.map((b) => (
-          <OrbitLine key={`orbit-${b.id}`} radius={b.scene.distance} />
+          <OrbitLine key={`orbit-${b.id}`} scene={b.scene} />
         ))}
         {bodies.map((b) => (
           <OrbitingBody key={b.id} body={b} />
