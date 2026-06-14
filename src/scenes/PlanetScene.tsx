@@ -6,11 +6,13 @@ import { getBody } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
+import { getPhoto } from '../utils/photos';
 import CelestialBody from '../components/three/CelestialBody';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
 import FactsGrid from '../components/ui/FactsGrid';
+import PhotoCard from '../components/ui/PhotoCard';
 
 const CUT_ANGLE = Math.PI * 1.45; // porción visible de cada capa en el corte
 
@@ -138,6 +140,13 @@ export default function PlanetScene() {
 
         <StoryPager story={body.story} storyKey={body.id} />
         <FactsGrid facts={body.facts} />
+
+        {getPhoto(body.id) && (
+          <>
+            <div className="section-title">📷 ¿Cómo se ve de verdad?</div>
+            <PhotoCard photoKey={body.id} label="Foto real" />
+          </>
+        )}
 
         {body.layers.length > 0 && (
           <>

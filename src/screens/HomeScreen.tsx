@@ -3,12 +3,12 @@ import { useApp } from '../state/store';
 
 const LOCKED_CHAPTERS = [
   { emoji: '🐳', title: 'El Océano', desc: 'Sumérgete hasta lo más profundo' },
-  { emoji: '🫀', title: 'El Cuerpo Humano', desc: 'Un viaje dentro de ti' },
 ];
 
 export default function HomeScreen() {
   const goSolar = useApp((s) => s.goSolar);
   const goDinoIsland = useApp((s) => s.goDinoIsland);
+  const goBody = useApp((s) => s.goBody);
 
   const stars = useMemo(
     () =>
@@ -43,6 +43,11 @@ export default function HomeScreen() {
           <span className="chapter-emoji">🦖</span>
           <h3>Los Dinosaurios</h3>
           <p>Viaja millones de años al pasado</p>
+        </button>
+        <button className="chapter-card" onClick={goBody}>
+          <span className="chapter-emoji">🫀</span>
+          <h3>El Cuerpo Humano</h3>
+          <p>Un viaje dentro de ti</p>
         </button>
         {LOCKED_CHAPTERS.map((c) => (
           <div className="chapter-card locked" key={c.title}>

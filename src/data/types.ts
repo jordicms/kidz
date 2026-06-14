@@ -21,6 +21,29 @@ export interface Fact {
   value: string;
 }
 
+/** Aparato/sistema del cuerpo humano. */
+export interface BodySystem {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+}
+
+/** Órgano del cuerpo humano. */
+export interface Organ {
+  id: string;
+  name: string;
+  emoji: string;
+  /** Sistema al que pertenece (id de BodySystem). */
+  system: string;
+  color: string;
+  /** Posición dentro de la figura, en unidades de escena. */
+  position: [number, number, number];
+  tagline: string;
+  facts: Fact[];
+  story: StoryPage[];
+}
+
 /** Luna que orbita un planeta. */
 export interface Moon {
   id: string;

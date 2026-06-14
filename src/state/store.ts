@@ -6,7 +6,16 @@ import {
   type QualityPreset,
 } from '../utils/quality';
 
-export type View = 'home' | 'solar' | 'planet' | 'galaxy' | 'universe' | 'dino-island' | 'dino';
+export type View =
+  | 'home'
+  | 'solar'
+  | 'planet'
+  | 'galaxy'
+  | 'universe'
+  | 'dino-island'
+  | 'dino'
+  | 'body'
+  | 'organ';
 
 interface AppState {
   view: View;
@@ -14,6 +23,8 @@ interface AppState {
   bodyId: string | null;
   /** Dinosaurio seleccionado (vista ficha). */
   dinoId: string | null;
+  /** Órgano del cuerpo humano seleccionado (vista ficha). */
+  organId: string | null;
   /** Objeto de espacio profundo con su historia abierta. */
   deepSpaceId: string | null;
   /** Multiplicador de velocidad de la simulación. */
@@ -26,6 +37,8 @@ interface AppState {
   goUniverse: () => void;
   goDinoIsland: () => void;
   openDino: (id: string) => void;
+  goBody: () => void;
+  openOrgan: (id: string) => void;
   openBody: (id: string) => void;
   openDeepSpace: (id: string) => void;
   closeDeepSpace: () => void;
@@ -41,15 +54,18 @@ export const useApp = create<AppState>((set) => ({
   view: 'home',
   bodyId: null,
   dinoId: null,
+  organId: null,
   deepSpaceId: null,
   speed: 1,
   quality: detectPreset(),
-  goHome: () => set({ view: 'home', bodyId: null, dinoId: null, deepSpaceId: null }),
+  goHome: () => set({ view: 'home', bodyId: null, dinoId: null, organId: null, deepSpaceId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),
   goGalaxy: () => set({ view: 'galaxy', bodyId: null, deepSpaceId: null }),
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
   goDinoIsland: () => set({ view: 'dino-island', dinoId: null, deepSpaceId: null }),
   openDino: (id) => set({ view: 'dino', dinoId: id }),
+  goBody: () => set({ view: 'body', organId: null, deepSpaceId: null }),
+  openOrgan: (id) => set({ view: 'organ', organId: id }),
   openBody: (id) => set({ view: 'planet', bodyId: id }),
   openDeepSpace: (id) => set({ deepSpaceId: id }),
   closeDeepSpace: () => set({ deepSpaceId: null }),
