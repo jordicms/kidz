@@ -8,6 +8,7 @@ import DinoIslandScene from './scenes/DinoIslandScene';
 import DinoScene from './scenes/DinoScene';
 import BodyScene from './scenes/BodyScene';
 import OrganScene from './scenes/OrganScene';
+import JourneyScene from './scenes/JourneyScene';
 import DeepSpaceStory from './components/ui/DeepSpaceStory';
 import SceneTransition from './components/ui/SceneTransition';
 import { DINOS, ERA_COLORS, ERAS } from './data/dinos';
@@ -56,13 +57,14 @@ function Hud() {
 
   if (view === 'home') return null;
 
-  const isDetail = view === 'planet' || view === 'dino' || view === 'organ';
+  const isDetail = view === 'planet' || view === 'dino' || view === 'organ' || view === 'journey';
   const back =
     view === 'planet' ? goSolar
     : view === 'galaxy' ? goSolar
     : view === 'universe' ? goGalaxy
     : view === 'dino' ? goDinoIsland
     : view === 'organ' ? goBody
+    : view === 'journey' ? goBody
     : goHome;
   const showSpeed = view === 'solar' || view === 'dino-island';
 
@@ -122,6 +124,7 @@ export default function App() {
       {view === 'dino' && <DinoScene />}
       {view === 'body' && <BodyScene />}
       {view === 'organ' && <OrganScene />}
+      {view === 'journey' && <JourneyScene />}
       <Hud />
       <DeepSpaceStory />
       <SceneTransition />
