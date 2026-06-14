@@ -36,15 +36,21 @@ function WalkingDino({ dino }: { dino: Dino }) {
   const speed = useApp((s) => s.speed);
   const openDino = useApp((s) => s.openDino);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     angle.current += dino.scene.path.speed * speed * delta * 0.18;
     const r = dino.scene.path.radius;
     const a = angle.current;
     const g = group.current;
     if (!g) return;
-    g.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+    const baseH = dino.scene.path.height ?? 0;
+    // Los voladores cabecean suavemente arriba/abajo.
+    const h = baseH + (dino.fly ? Math.sin(state.clock.elapsedTime * 1.2) * 0.6 : 0);
+    g.position.set(Math.cos(a) * r, h, Math.sin(a) * r);
     // Mira en la dirección del movimiento (tangente al círculo).
-    g.rotation.y = Math.atan2(-Math.sin(a) * Math.sign(dino.scene.path.speed), Math.cos(a) * Math.sign(dino.scene.path.speed));
+    const sign = Math.sign(dino.scene.path.speed) || 1;
+    g.rotation.y = Math.atan2(-Math.sin(a) * sign, Math.cos(a) * sign);
+    // Ligera inclinación al volar.
+    g.rotation.z = dino.fly ? Math.sin(state.clock.elapsedTime * 1.2) * 0.12 : 0;
   });
 
   return (
@@ -87,11 +93,6 @@ function Island() {
         <cylinderGeometry args={[20, 21, 0.9, 48]} />
         <meshStandardMaterial color="#e6d59a" flatShading roughness={1} />
       </mesh>
-      {/* Mar */}
-      <mesh position={[0, -1.0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[80, 64]} />
-        <meshStandardMaterial color="#2b86c5" transparent opacity={0.9} roughness={0.4} metalness={0.1} />
-      </mesh>
       {/* Volcán al fondo */}
       <group position={[-9, 0, -9]}>
         <mesh position={[0, 2.2, 0]} castShadow>
@@ -103,6 +104,61 @@ function Island() {
           <meshStandardMaterial color="#ff7a30" emissive="#ff5a1a" emissiveIntensity={1.4} toneMapped={false} />
         </mesh>
       </group>
+    </group>
+  );
+}
+
+/** Mar con olas suaves (desplazamiento de vértices por seno). */
+function Water() {
+  const quality = useApp((s) => s.quality);
+  const seg = quality.tier === 'high' ? 48 : quality.tier === 'medium' ? 32 : 14;
+  const geo = useMemo(() => new THREE.PlaneGeometry(170, 170, seg, seg), [seg]);
+  const base = useMemo(() => Float32Array.from(geo.attributes.position.array), [geo]);
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime;
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = base[i * 3];
+      const y = base[i * 3 + 1];
+      pos.setZ(i, Math.sin(x * 0.12 + t) * 0.28 + Math.cos(y * 0.18 + t * 0.8) * 0.28);
+    }
+    pos.needsUpdate = true;
+    if (quality.tier === 'high') geo.computeVertexNormals();
+  });
+
+  return (
+    <mesh geometry={geo} position={[0, -1.0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <meshStandardMaterial color="#2b86c5" transparent opacity={0.92} roughness={0.35} metalness={0.1} flatShading />
+    </mesh>
+  );
+}
+
+/** Nubes low-poly que se desplazan lentamente (se omiten en gama baja). */
+function Clouds() {
+  const ref = useRef<THREE.Group>(null);
+  const quality = useApp((s) => s.quality);
+  useFrame((_, d) => {
+    if (ref.current) ref.current.rotation.y += 0.012 * d;
+  });
+  if (quality.tier === 'low') return null;
+  const clouds = Array.from({ length: 6 }, (_, i) => {
+    const a = (i / 6) * Math.PI * 2;
+    const r = 16 + ((i * 7) % 9);
+    return { key: i, pos: [Math.cos(a) * r, 13 + (i % 3) * 2, Math.sin(a) * r] as [number, number, number] };
+  });
+  return (
+    <group ref={ref}>
+      {clouds.map((c) => (
+        <group key={c.key} position={c.pos}>
+          {[[0, 0, 0], [1.6, -0.2, 0.3], [-1.5, -0.1, -0.2]].map((p, j) => (
+            <mesh key={j} position={p as [number, number, number]}>
+              <sphereGeometry args={[1.3, 8, 8]} />
+              <meshStandardMaterial color="#ffffff" flatShading roughness={1} />
+            </mesh>
+          ))}
+        </group>
+      ))}
     </group>
   );
 }
@@ -145,6 +201,8 @@ export default function DinoIslandScene() {
           shadow-camera-bottom={-30}
         />
         <Island />
+        <Water />
+        <Clouds />
         {trees.map((t) => (
           <Tree key={t.key} position={t.position} scale={t.scale} />
         ))}

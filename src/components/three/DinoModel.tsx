@@ -17,11 +17,18 @@ export default function DinoModel({ dino, moving = true }: { dino: Dino; moving?
       </Suspense>
     );
   }
-  return dino.shape === 'ceratopsian' ? (
-    <Ceratopsian dino={dino} moving={moving} />
-  ) : (
-    <Theropod dino={dino} moving={moving} />
-  );
+  switch (dino.shape) {
+    case 'ceratopsian':
+      return <Ceratopsian dino={dino} moving={moving} />;
+    case 'sauropod':
+      return <Sauropod dino={dino} moving={moving} />;
+    case 'stegosaur':
+      return <Stegosaur dino={dino} moving={moving} />;
+    case 'pterosaur':
+      return <Pterosaur dino={dino} moving={moving} />;
+    default:
+      return <Theropod dino={dino} moving={moving} />;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -211,6 +218,169 @@ function Ceratopsian({ dino, moving }: { dino: Dino; moving: boolean }) {
           <Box color={c2} size={[0.34, 0.18, 0.4]} position={[0, -0.72, 0.04]} />
         </group>
       ))}
+    </group>
+  );
+}
+
+/** Saurópodo gigante de cuello largo tipo Brachiosaurus, mirando hacia +Z. */
+function Sauropod({ dino, moving }: { dino: Dino; moving: boolean }) {
+  const legs = [useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null)];
+  const neck = useRef<THREE.Group>(null);
+  const c1 = dino.color;
+  const c2 = dino.color2 ?? dino.color;
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime * 3;
+    const amp = moving ? 0.28 : 0.03;
+    legs[0].current && (legs[0].current.rotation.x = Math.sin(t) * amp);
+    legs[3].current && (legs[3].current.rotation.x = Math.sin(t) * amp);
+    legs[1].current && (legs[1].current.rotation.x = Math.sin(t + Math.PI) * amp);
+    legs[2].current && (legs[2].current.rotation.x = Math.sin(t + Math.PI) * amp);
+    if (neck.current) neck.current.rotation.x = Math.sin(t * 0.4) * 0.06 - 0.15;
+  });
+
+  const legPositions: [number, number, number][] = [
+    [-0.7, 2.0, 1.1],
+    [0.7, 2.0, 1.1],
+    [-0.75, 2.0, -1.1],
+    [0.75, 2.0, -1.1],
+  ];
+
+  return (
+    <group>
+      {/* Cuerpo enorme */}
+      <Body color={c1} args={[1.0, 2.2, 6, 12]} position={[0, 2.4, 0]} rotation={[Math.PI / 2, 0, 0]} />
+      {/* Cuello largo hacia arriba-delante */}
+      <group ref={neck} position={[0, 3.1, 1.1]}>
+        <Body color={c1} args={[0.4, 1.6, 5, 10]} position={[0, 1.0, 0.5]} rotation={[Math.PI / 3, 0, 0]} />
+        <Body color={c1} args={[0.3, 1.4, 5, 10]} position={[0, 2.4, 1.0]} rotation={[Math.PI / 3.2, 0, 0]} />
+        {/* Cabeza pequeña */}
+        <group position={[0, 3.4, 1.5]}>
+          <Box color={c2} size={[0.4, 0.4, 0.7]} position={[0, 0, 0.2]} />
+          <Eyes y={0.1} z={0.45} dx={0.18} />
+        </group>
+      </group>
+      {/* Cola larga hacia atrás-abajo */}
+      <Body color={c1} args={[0.4, 1.8, 5, 10]} position={[0, 2.2, -1.6]} rotation={[Math.PI / 2.4, 0, 0]} />
+      <Body color={c1} args={[0.2, 1.6, 5, 8]} position={[0, 1.8, -2.9]} rotation={[Math.PI / 2.3, 0, 0]} />
+      {/* Patas columna (delanteras más altas) */}
+      {legPositions.map((p, i) => (
+        <group key={i} ref={legs[i]} position={p}>
+          <Box color={c1} size={[0.42, i < 2 ? 2.0 : 1.8, 0.42]} position={[0, i < 2 ? -1.0 : -0.9, 0]} />
+          <Box color={c2} size={[0.46, 0.22, 0.5]} position={[0, i < 2 ? -2.0 : -1.8, 0.04]} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Estegosaurio con placas y cola con pinchos, mirando hacia +Z. */
+function Stegosaur({ dino, moving }: { dino: Dino; moving: boolean }) {
+  const legs = [useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null), useRef<THREE.Group>(null)];
+  const tail = useRef<THREE.Group>(null);
+  const c1 = dino.color;
+  const c2 = dino.color2 ?? dino.color;
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime * 4.5;
+    const amp = moving ? 0.32 : 0.03;
+    legs[0].current && (legs[0].current.rotation.x = Math.sin(t) * amp);
+    legs[3].current && (legs[3].current.rotation.x = Math.sin(t) * amp);
+    legs[1].current && (legs[1].current.rotation.x = Math.sin(t + Math.PI) * amp);
+    legs[2].current && (legs[2].current.rotation.x = Math.sin(t + Math.PI) * amp);
+    if (tail.current) tail.current.rotation.y = Math.sin(t * 0.6) * 0.2;
+  });
+
+  const legPositions: [number, number, number][] = [
+    [-0.5, 0.95, 0.7],
+    [0.5, 0.95, 0.7],
+    [-0.55, 0.95, -0.7],
+    [0.55, 0.95, -0.7],
+  ];
+  // Placas a lo largo del lomo.
+  const plateZ = [0.8, 0.45, 0.1, -0.25, -0.6];
+
+  return (
+    <group>
+      {/* Cuerpo arqueado */}
+      <Body color={c1} args={[0.6, 1.7, 6, 12]} position={[0, 1.3, 0]} rotation={[Math.PI / 2, 0, 0]} />
+      {/* Cabeza pequeña y baja */}
+      <group position={[0, 0.95, 1.3]}>
+        <Box color={c2} size={[0.35, 0.35, 0.6]} position={[0, 0, 0.2]} />
+        <Eyes y={0.08} z={0.4} dx={0.16} />
+      </group>
+      {/* Placas (dos colores alternos) */}
+      {plateZ.map((z, i) => (
+        <mesh key={i} position={[0, 2.0 + (i === 2 ? 0.15 : 0), z]} rotation={[0, 0, 0]} castShadow>
+          <coneGeometry args={[0.34, 0.6, 4]} />
+          <meshStandardMaterial color={i % 2 ? c2 : '#d98a3a'} flatShading roughness={0.95} />
+        </mesh>
+      ))}
+      {/* Cola con pinchos (thagomizer) */}
+      <group ref={tail} position={[0, 1.2, -0.9]}>
+        <Body color={c1} args={[0.28, 1.2, 5, 8]} position={[0, -0.1, -0.8]} rotation={[Math.PI / 2.2, 0, 0]} />
+        {[[-0.18, 0.18] as const, [0.18, -0.18] as const].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.1, -1.5 + z]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+            <coneGeometry args={[0.06, 0.5, 6]} />
+            <meshStandardMaterial color="#efe6d2" flatShading />
+          </mesh>
+        ))}
+      </group>
+      {/* Patas */}
+      {legPositions.map((p, i) => (
+        <group key={i} ref={legs[i]} position={p}>
+          <Box color={c1} size={[0.3, i < 2 ? 0.5 : 0.8, 0.3]} position={[0, i < 2 ? -0.25 : -0.4, 0]} />
+          <Box color={c2} size={[0.32, 0.16, 0.4]} position={[0, i < 2 ? -0.5 : -0.8, 0.03]} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Reptil volador tipo Pteranodon con alas que aletean, mirando hacia +Z. */
+function Pterosaur({ dino, moving }: { dino: Dino; moving: boolean }) {
+  const wingL = useRef<THREE.Group>(null);
+  const wingR = useRef<THREE.Group>(null);
+  const c1 = dino.color;
+  const c2 = dino.color2 ?? dino.color;
+
+  useFrame((s) => {
+    const t = s.clock.elapsedTime * (moving ? 5 : 1.5);
+    const flap = Math.sin(t) * 0.6;
+    if (wingL.current) wingL.current.rotation.z = flap;
+    if (wingR.current) wingR.current.rotation.z = -flap;
+  });
+
+  return (
+    <group>
+      {/* Cuerpo */}
+      <Body color={c1} args={[0.26, 0.8, 5, 10]} position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]} />
+      {/* Cabeza con pico largo y cresta */}
+      <group position={[0, 0.15, 0.6]}>
+        <Box color={c1} size={[0.3, 0.3, 0.4]} position={[0, 0, 0]} />
+        {/* Pico */}
+        <mesh position={[0, 0, 0.6]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <coneGeometry args={[0.08, 0.8, 8]} />
+          <meshStandardMaterial color={c2} flatShading />
+        </mesh>
+        {/* Cresta hacia atrás */}
+        <mesh position={[0, 0.25, -0.25]} rotation={[-0.7, 0, 0]} castShadow>
+          <coneGeometry args={[0.1, 0.6, 6]} />
+          <meshStandardMaterial color={c2} flatShading />
+        </mesh>
+        <Eyes y={0.06} z={0.2} dx={0.14} />
+      </group>
+      {/* Alas que aletean */}
+      {([['L', wingL, -1], ['R', wingR, 1]] as const).map(([k, ref, side]) => (
+        <group key={k} ref={ref} position={[side * 0.15, 0.1, 0]}>
+          <mesh position={[side * 1.1, 0, -0.1]} castShadow>
+            <boxGeometry args={[2.0, 0.06, 1.0]} />
+            <meshStandardMaterial color={c1} flatShading roughness={0.95} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
+      {/* Cola corta */}
+      <Body color={c1} args={[0.1, 0.7, 5, 8]} position={[0, -0.05, -0.7]} rotation={[Math.PI / 2.1, 0, 0]} />
     </group>
   );
 }
