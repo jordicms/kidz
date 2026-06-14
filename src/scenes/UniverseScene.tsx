@@ -208,7 +208,7 @@ export default function UniverseScene() {
         gl={{ antialias: quality.antialias }}
       >
         <color attach="background" args={['#02030a']} />
-        <SpaceBackground />
+        <SpaceBackground keys={['universe-bg', 'stars']} />
         <Stars
           radius={180}
           depth={80}

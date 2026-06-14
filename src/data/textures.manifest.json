@@ -13,6 +13,7 @@
     { "key": "pluton", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Surface Map of Pluto.jpg?width=2048", "credit": "NASA/JHUAPL/SwRI (New Horizons) · dominio público", "license": "verify" },
     { "key": "ceres", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Solarsystemscope texture 2k ceres fictional.jpg?width=2048", "credit": "Solar System Scope (textura de Ceres)", "license": "CC-BY-4.0" },
     { "key": "stars", "url": "https://www.solarsystemscope.com/textures/download/2k_stars_milky_way.jpg", "credit": "Solar System Scope (Vía Láctea)", "license": "CC-BY-4.0" },
+    { "key": "universe-bg", "url": "https://www.solarsystemscope.com/textures/download/8k_stars_milky_way.jpg", "credit": "Solar System Scope (Vía Láctea 8k)", "license": "CC-BY-4.0" },
     { "key": "saturno-rings", "url": "https://www.solarsystemscope.com/textures/download/2k_saturn_ring_alpha.png", "credit": "Solar System Scope (anillos de Saturno)", "license": "CC-BY-4.0" }
   ]
 }

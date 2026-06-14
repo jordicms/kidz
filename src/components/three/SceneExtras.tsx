@@ -11,10 +11,14 @@ import { getSurfaceTextureUrl } from '../../utils/surfaceTextures';
  * en src/assets/textures/stars.*; si no, no hace nada (se mantiene el color y las
  * estrellas procedurales de la escena).
  */
-export function SpaceBackground() {
+export function SpaceBackground({ keys = ['stars'] }: { keys?: string[] }) {
   const { scene } = useThree();
   useEffect(() => {
-    const url = getSurfaceTextureUrl('stars');
+    let url: string | undefined;
+    for (const k of keys) {
+      url = getSurfaceTextureUrl(k);
+      if (url) break;
+    }
     if (!url) return;
     let alive = true;
     const prev = scene.background;
@@ -28,7 +32,8 @@ export function SpaceBackground() {
       alive = false;
       scene.background = prev;
     };
-  }, [scene]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene, keys.join('|')]);
   return null;
 }
 
