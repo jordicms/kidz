@@ -305,10 +305,7 @@ function fadeColor(color: string, factor: number): string {
   return `rgba(${r}, ${g}, ${b}, ${(a * factor).toFixed(3)})`;
 }
 
-/**
- * Sprite circular con degradado radial: brillos, halos, nubes de nebulosa...
- * Usa varias paradas para una caída suave (queda mejor con el bloom encima).
- */
+/** Sprite circular con degradado radial: brillos, halos, nubes de nebulosa... */
 export function createGlowTexture(key: string, inner: string, outer = 'rgba(0,0,0,0)'): THREE.Texture {
   const cacheKey = `glow:${key}`;
   const cached = cache.get(cacheKey);
@@ -324,6 +321,35 @@ export function createGlowTexture(key: string, inner: string, outer = 'rgba(0,0,
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   const texture = new THREE.CanvasTexture(canvas);
+  cache.set(cacheKey, texture);
+  return texture;
+}
+
+/**
+ * Disco de acreción: degradado horizontal (interior caliente → exterior frío)
+ * pensado para mapearse de forma radial en un anillo (UV remapeada). Brilla
+ * mucho a propósito para que el bloom lo capte.
+ */
+export function createAccretionTexture(): THREE.Texture {
+  const cacheKey = 'accretion-disk';
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const w = 512;
+  const h = 8;
+  const { canvas, ctx } = makeCanvas(w, h);
+  const grad = ctx.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0.0, 'rgba(255,255,255,0)');
+  grad.addColorStop(0.06, 'rgba(225,240,255,1)');
+  grad.addColorStop(0.2, 'rgba(255,244,214,1)');
+  grad.addColorStop(0.42, 'rgba(255,170,70,1)');
+  grad.addColorStop(0.68, 'rgba(205,70,30,0.9)');
+  grad.addColorStop(1.0, 'rgba(60,12,6,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapT = THREE.RepeatWrapping;
   cache.set(cacheKey, texture);
   return texture;
 }

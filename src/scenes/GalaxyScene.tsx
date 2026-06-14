@@ -79,7 +79,7 @@ export function GalaxyPoints({
 }
 
 function BlackHole() {
-  const openDeepSpace = useApp((s) => s.openDeepSpace);
+  const goBlackHole = useApp((s) => s.goBlackHole);
   const diskTexture = useMemo(() => createGlowTexture('accretion', 'rgba(255,170,70,1)'), []);
   const coreGlow = useMemo(() => createGlowTexture('bh-core', 'rgba(255,140,40,0.9)'), []);
   const diskRef = useRef<THREE.Mesh>(null);
@@ -90,7 +90,7 @@ function BlackHole() {
     <group
       onClick={(e) => {
         e.stopPropagation();
-        openDeepSpace('sagitario-a');
+        goBlackHole();
       }}
       onPointerOver={() => (document.body.style.cursor = 'pointer')}
       onPointerOut={() => (document.body.style.cursor = 'auto')}
@@ -114,8 +114,8 @@ function BlackHole() {
         <spriteMaterial map={coreGlow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.7} toneMapped={false} />
       </sprite>
       <Html center position={[0, 2.4, 0]} zIndexRange={[5, 0]}>
-        <div className="body-label" onClick={() => openDeepSpace('sagitario-a')}>
-          <span className="chip">🕳️ Sagitario A* · ¡tócame!</span>
+        <div className="body-label" onClick={() => goBlackHole()}>
+          <span className="chip">🕳️ Sagitario A* · ¡velo de cerca!</span>
         </div>
       </Html>
     </group>
