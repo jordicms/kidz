@@ -88,20 +88,58 @@ export default function CelestialBody({ body, scale = 1 }: Props) {
       {atmosphere && (
         <Atmosphere radius={size} color={atmosphere.color} intensity={atmosphere.intensity ?? 1} />
       )}
-      {body.scene.rings && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry
-            args={[size * (body.scene.rings.inner / body.scene.size), size * (body.scene.rings.outer / body.scene.size), 96]}
-          />
-          <meshBasicMaterial
-            map={createRingTexture(body.id, body.scene.rings.color)}
-            transparent
-            opacity={body.scene.rings.opacity ?? 0.8}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
+      {body.scene.rings && <PlanetRings body={body} size={size} />}
     </group>
+  );
+}
+
+/** Anillos del planeta: textura real (UV radial) si existe, si no procedural. */
+function PlanetRings({ body, size }: { body: Body; size: number }) {
+  const rings = body.scene.rings!;
+  const inner = size * (rings.inner / body.scene.size);
+  const outer = size * (rings.outer / body.scene.size);
+  const ringUrl = getSurfaceTextureUrl(`${body.id}-rings`);
+
+  const geometry = useMemo(() => {
+    const g = new THREE.RingGeometry(inner, outer, 128);
+    if (ringUrl) {
+      // Remapea las UV: u = posición radial (interior→exterior), v = ángulo,
+      // para que la textura tira de anillos se aplique de dentro hacia fuera.
+      const pos = g.attributes.position;
+      const uv = g.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        const r = Math.hypot(x, y);
+        uv.setXY(i, (r - inner) / (outer - inner), (Math.atan2(y, x) + Math.PI) / (Math.PI * 2));
+      }
+      uv.needsUpdate = true;
+    }
+    return g;
+  }, [inner, outer, ringUrl]);
+
+  const proceduralMap = useMemo(() => createRingTexture(body.id, rings.color), [body.id, rings.color]);
+  const [map, setMap] = useState<THREE.Texture>(proceduralMap);
+  useEffect(() => {
+    if (!ringUrl) {
+      setMap(proceduralMap);
+      return;
+    }
+    let alive = true;
+    new THREE.TextureLoader().load(ringUrl, (tex) => {
+      if (!alive) return;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapT = THREE.RepeatWrapping;
+      setMap(tex);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [ringUrl, proceduralMap]);
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={geometry}>
+      <meshBasicMaterial map={map} transparent opacity={rings.opacity ?? 0.8} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
   );
 }

@@ -9,7 +9,7 @@ import { scaleCount } from '../utils/quality';
 import { getPhoto } from '../utils/photos';
 import CelestialBody from '../components/three/CelestialBody';
 import Effects from '../components/three/Effects';
-import { AdaptiveQuality } from '../components/three/SceneExtras';
+import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
 import FactsGrid from '../components/ui/FactsGrid';
 import PhotoCard from '../components/ui/PhotoCard';
@@ -89,6 +89,7 @@ export default function PlanetScene() {
             gl={{ antialias: quality.antialias }}
           >
             <color attach="background" args={['#05060f']} />
+            <SpaceBackground />
             <Stars radius={120} depth={40} count={scaleCount(2500, quality, 600)} factor={4} saturation={0} fade />
             <ambientLight intensity={interior ? 0.9 : 0.45} />
             <directionalLight position={[8, 4, 6]} intensity={isSun ? 0.4 : 2.2} color="#fff2d5" />

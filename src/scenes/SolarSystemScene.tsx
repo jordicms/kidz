@@ -8,7 +8,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
 import Effects from '../components/three/Effects';
-import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
+import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 const _hoverTarget = new THREE.Vector3();
 
@@ -209,6 +209,7 @@ export default function SolarSystemScene() {
         gl={{ antialias: quality.antialias }}
       >
         <color attach="background" args={['#05060f']} />
+        <SpaceBackground />
         <ambientLight intensity={0.35} />
         <Stars
           radius={220}
