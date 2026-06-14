@@ -1,12 +1,31 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
-import Effects from '../components/three/Effects';
+import { Lensing } from '../components/three/Lensing';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
+
+/** Postprocesado del agujero negro: lente gravitacional (gama media/alta) + bloom. */
+function BlackHoleEffects() {
+  const quality = useApp((s) => s.quality);
+  const size = useThree((s) => s.size);
+  if (!quality.postprocessing) return null;
+  return (
+    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
+      {quality.tier !== 'low' ? (
+        <Lensing radius={0.16} strength={0.05} aspect={size.width / size.height} />
+      ) : (
+        <></>
+      )}
+      <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
+      <Vignette eskil={false} offset={0.25} darkness={0.75} />
+    </EffectComposer>
+  );
+}
 
 const HORIZON = 1.1;
 const DISK_INNER = 1.7;
@@ -20,13 +39,21 @@ function AccretionDisk() {
     const g = new THREE.RingGeometry(DISK_INNER, DISK_OUTER, 160, 1);
     const pos = g.attributes.position;
     const uv = g.attributes.uv;
+    const colors = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const y = pos.getY(i);
       const r = Math.hypot(x, y);
-      uv.setXY(i, (r - DISK_INNER) / (DISK_OUTER - DISK_INNER), (Math.atan2(y, x) + Math.PI) / (Math.PI * 2));
+      const ang = Math.atan2(y, x);
+      uv.setXY(i, (r - DISK_INNER) / (DISK_OUTER - DISK_INNER), (ang + Math.PI) / (Math.PI * 2));
+      // Doppler: el lado que se acerca (un costado) brilla bastante más.
+      const doppler = 0.45 + 1.15 * (0.5 + 0.5 * Math.cos(ang));
+      colors[i * 3] = doppler;
+      colors[i * 3 + 1] = doppler;
+      colors[i * 3 + 2] = doppler;
     }
     uv.needsUpdate = true;
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     return g;
   }, []);
 
@@ -38,6 +65,7 @@ function AccretionDisk() {
     <mesh ref={ref} geometry={geometry} rotation={[-Math.PI / 2.6, 0, 0]}>
       <meshBasicMaterial
         map={map}
+        vertexColors
         transparent
         side={THREE.DoubleSide}
         depthWrite={false}
@@ -99,7 +127,7 @@ export default function BlackHoleScene() {
         <BlackHole />
         <OrbitControls enablePan={false} minDistance={5} maxDistance={22} autoRotate autoRotateSpeed={0.35} maxPolarAngle={Math.PI * 0.92} />
         <AdaptiveQuality />
-        <Effects />
+        <BlackHoleEffects />
       </Canvas>
 
       <div className="bh-overlay">

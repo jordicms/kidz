@@ -58,6 +58,7 @@ export function GalaxyPoints({
     () => generateGalaxy(count, radius, branches, inside, outside),
     [count, radius, branches, inside, outside],
   );
+  const starTex = useMemo(() => createGlowTexture('star-point', 'rgba(255,255,255,1)'), []);
   return (
     <points>
       <bufferGeometry>
@@ -66,6 +67,7 @@ export function GalaxyPoints({
       </bufferGeometry>
       <pointsMaterial
         size={size}
+        map={starTex}
         sizeAttenuation
         vertexColors
         transparent
@@ -156,11 +158,22 @@ function SunMarker() {
 
 function RotatingGalaxy({ count }: { count: number }) {
   const ref = useRef<THREE.Group>(null);
+  const haze = useMemo(() => createGlowTexture('galaxy-haze', 'rgba(150,170,255,0.5)'), []);
+  const core = useMemo(() => createGlowTexture('galaxy-core', 'rgba(255,225,170,0.95)'), []);
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += 0.015 * delta;
   });
   return (
     <group ref={ref}>
+      {/* Polvo/halo en el plano de la galaxia */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[22, 48]} />
+        <meshBasicMaterial map={haze} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </mesh>
+      {/* Bulbo central brillante */}
+      <sprite scale={[6, 6, 1]}>
+        <spriteMaterial map={core} transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </sprite>
       <GalaxyPoints count={count} />
     </group>
   );
