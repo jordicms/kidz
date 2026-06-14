@@ -42,12 +42,25 @@ function GltfDino({ url, moving }: { url: string; moving: boolean }) {
   // SkeletonUtils.clone clona correctamente mallas con esqueleto (animadas);
   // scene.clone() las rompe (siguen al esqueleto original → salen gigantes y
   // en el centro). La escala/centrado se aplican a un grupo contenedor.
-  const cloned = useMemo(() => skeletonClone(scene), [scene]);
+  const cloned = useMemo(() => {
+    const c = skeletonClone(scene);
+    // Las mallas con esqueleto se "salen" del frustum y three las descarta
+    // (se ven invisibles). Desactivamos el culling y recomputamos sus límites.
+    c.traverse((o) => {
+      o.frustumCulled = false;
+      const m = o as THREE.Mesh;
+      if (m.isMesh && m.geometry) m.geometry.computeBoundingBox?.();
+    });
+    return c;
+  }, [scene]);
   const fit = useMemo(() => {
     const box = new THREE.Box3().setFromObject(cloned);
+    if (box.isEmpty() || !Number.isFinite(box.min.y)) {
+      return { k: 1, offset: [0, 0, 0] as [number, number, number] };
+    }
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    const k = 3 / (size.y || 1); // altura normalizada a ~3 unidades
+    const k = size.y > 0 ? 3 / size.y : 1; // altura normalizada a ~3 unidades
     return { k, offset: [-center.x * k, -box.min.y * k, -center.z * k] as [number, number, number] };
   }, [cloned]);
   const { actions, names } = useAnimations(animations, cloned);
