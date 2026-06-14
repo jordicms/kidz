@@ -3,17 +3,19 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import type { Dino } from '../../data/dinos';
+import { getModelUrl } from '../../utils/models';
 
 /**
- * Modelo de un dinosaurio. Si el dino define `modelUrl`, carga ese GLB real
- * (rigged + animado) con el pipeline de drei. Si no, dibuja un dinosaurio
- * procedural low-poly para que el prototipo funcione 100% offline sin assets.
+ * Modelo de un dinosaurio. Si hay un GLB para el dino (en src/assets/models o
+ * vía `modelUrl`), carga ese modelo real (rigged + animado) con el pipeline de
+ * drei. Si no, dibuja un dinosaurio procedural low-poly (offline, sin assets).
  */
 export default function DinoModel({ dino, moving = true }: { dino: Dino; moving?: boolean }) {
-  if (dino.modelUrl) {
+  const url = dino.modelUrl ?? getModelUrl(dino.id);
+  if (url) {
     return (
       <Suspense fallback={null}>
-        <GltfDino url={dino.modelUrl} moving={moving} />
+        <GltfDino url={url} moving={moving} />
       </Suspense>
     );
   }

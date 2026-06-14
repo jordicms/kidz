@@ -65,9 +65,9 @@ export const DINOS: Dino[] = [
     shape: 'theropod',
     heightM: 4,
     lengthM: 12,
-    // Para usar un modelo real: descarga un T-Rex CC0 (Quaternius/Poly Pizza),
-    // ponlo en public/models/trex.glb y descomenta la línea siguiente:
-    // modelUrl: '/models/trex.glb',
+    // Para usar un modelo real: pon su URL en src/data/models.manifest.json y
+    // ejecuta `npm run models` (se guarda en src/assets/models/trex.glb y se usa
+    // automáticamente). Ver src/assets/models/README.md.
     scene: { scale: 0.5, path: { radius: 7, speed: 0.5, phase: 0 } },
     facts: [
       { icon: '🦷', label: 'Dientes', value: 'Hasta 60, ¡del tamaño de un plátano!' },

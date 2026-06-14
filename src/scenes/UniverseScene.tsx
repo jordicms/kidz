@@ -8,7 +8,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
 import Effects from '../components/three/Effects';
-import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
+import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 import { GalaxyPoints } from './GalaxyScene';
 
 function GlowSprite({
@@ -208,6 +208,7 @@ export default function UniverseScene() {
         gl={{ antialias: quality.antialias }}
       >
         <color attach="background" args={['#02030a']} />
+        <SpaceBackground />
         <Stars
           radius={180}
           depth={80}

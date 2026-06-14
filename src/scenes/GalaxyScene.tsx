@@ -6,7 +6,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
 import Effects from '../components/three/Effects';
-import { AdaptiveQuality, ShootingStars } from '../components/three/SceneExtras';
+import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 /** Genera las estrellas de una galaxia espiral. */
 export function generateGalaxy(
@@ -176,6 +176,7 @@ export default function GalaxyScene() {
         gl={{ antialias: quality.antialias }}
       >
         <color attach="background" args={['#03040b']} />
+        <SpaceBackground />
         <Stars radius={200} depth={60} count={scaleCount(3000, quality, 600)} factor={4} saturation={0} fade />
         <RotatingGalaxy count={scaleCount(22000, quality, 7000)} />
         <BlackHole />

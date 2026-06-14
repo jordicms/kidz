@@ -1,0 +1,11 @@
+{
+  "_comment": "Modelos 3D (GLB) de los dinosaurios. Ejecuta `npm run models` para descargarlos a src/assets/models/<key>.glb. Rellena cada `url` con un enlace DIRECTO a un .glb (CC0 recomendado). Dónde conseguirlos: Poly Pizza (https://poly.pizza/search/Dinosaur → botón Download da una URL .glb) o Quaternius 'Animated Dinosaurs' (CC0; convierte a .glb con Blender). key = id del dino. Las entradas con url vacía se omiten.",
+  "models": [
+    { "key": "trex", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/T-Rex" },
+    { "key": "triceratops", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/Triceratops" },
+    { "key": "plateosaurus", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/Dinosaur" },
+    { "key": "brachiosaurus", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/Brachiosaurus" },
+    { "key": "stegosaurus", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/Stegosaurus" },
+    { "key": "pteranodon", "url": "", "credit": "", "license": "CC0", "source": "https://poly.pizza/search/Pteranodon" }
+  ]
+}

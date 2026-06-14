@@ -44,6 +44,20 @@ export interface Organ {
   story: StoryPage[];
 }
 
+/** Viaje guiado por dentro del cuerpo (recorrido cinematográfico). */
+export interface Journey {
+  id: string;
+  title: string;
+  emoji: string;
+  system: string;
+  /** Color del "túnel" (vaso, tubo digestivo, vía aérea). */
+  tubeColor: string;
+  /** Color del viajero (glóbulo rojo, bocado de comida, burbuja de aire). */
+  travelerColor: string;
+  /** Pasos narrados que se muestran a lo largo del recorrido. */
+  steps: string[];
+}
+
 /** Luna que orbita un planeta. */
 export interface Moon {
   id: string;

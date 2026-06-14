@@ -1,9 +1,36 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import { useApp } from '../../state/store';
 import { createGlowTexture } from '../../utils/textures';
+import { getSurfaceTextureUrl } from '../../utils/surfaceTextures';
+
+/**
+ * Fondo estelar real (mapa equirectangular de la Vía Láctea) si está descargado
+ * en src/assets/textures/stars.*; si no, no hace nada (se mantiene el color y las
+ * estrellas procedurales de la escena).
+ */
+export function SpaceBackground() {
+  const { scene } = useThree();
+  useEffect(() => {
+    const url = getSurfaceTextureUrl('stars');
+    if (!url) return;
+    let alive = true;
+    const prev = scene.background;
+    new THREE.TextureLoader().load(url, (tex) => {
+      if (!alive) return;
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      scene.background = tex;
+    });
+    return () => {
+      alive = false;
+      scene.background = prev;
+    };
+  }, [scene]);
+  return null;
+}
 
 /**
  * Vigila los fps dentro del Canvas y baja un escalón de calidad si el
