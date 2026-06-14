@@ -4,7 +4,7 @@
  * Se resuelven en build con import.meta.glob, así que la app funciona aunque
  * todavía no haya ningún modelo (se usa el procedural como respaldo).
  */
-const files = import.meta.glob('../assets/models/*.glb', {
+const files = import.meta.glob('../assets/models/*.{glb,gltf,GLB,GLTF}', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -12,7 +12,8 @@ const files = import.meta.glob('../assets/models/*.glb', {
 
 const urlByKey: Record<string, string> = {};
 for (const path in files) {
-  const key = path.split('/').pop()!.replace(/\.[^.]+$/, '');
+  // Clave = nombre de archivo sin extensión, en minúsculas (más tolerante).
+  const key = path.split('/').pop()!.replace(/\.[^.]+$/, '').toLowerCase();
   urlByKey[key] = files[path];
 }
 
