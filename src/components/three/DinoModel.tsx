@@ -38,8 +38,22 @@ export default function DinoModel({ dino, moving = true }: { dino: Dino; moving?
 /* ------------------------------------------------------------------ */
 function GltfDino({ url, moving }: { url: string; moving: boolean }) {
   const { scene, animations } = useGLTF(url);
-  // Clona para poder mostrar el mismo modelo varias veces sin compartir estado.
-  const cloned = useMemo(() => scene.clone(true), [scene]);
+  // Clona y normaliza: altura ~3 unidades y base apoyada en el suelo, centrado.
+  // Así cualquier GLB (venga en la escala que venga) se ve a un tamaño coherente.
+  const cloned = useMemo(() => {
+    const s = scene.clone(true);
+    s.position.set(0, 0, 0);
+    s.scale.setScalar(1);
+    s.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(s);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    s.scale.setScalar(3 / (size.y || 1));
+    s.updateWorldMatrix(true, true);
+    const box2 = new THREE.Box3().setFromObject(s);
+    s.position.set(-(box2.min.x + box2.max.x) / 2, -box2.min.y, -(box2.min.z + box2.max.z) / 2);
+    return s;
+  }, [scene]);
   const { actions, names } = useAnimations(animations, cloned);
 
   useEffect(() => {
