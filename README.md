@@ -24,6 +24,18 @@ con Capacitor.
 Todo el contenido visual es **procedural** (texturas dibujadas en canvas):
 la app no descarga ninguna imagen y funciona 100% offline.
 
+## Capítulo 2: Los Dinosaurios 🦖 (prototipo)
+
+- **La Isla de los Dinosaurios**: una islita 3D (mar, playa, bosque y un volcán)
+  por la que pasean dinosaurios. Tócalos para abrir su ficha con cuento narrado,
+  datos curiosos, su **era** y una **comparación de tamaño** contigo.
+- **Línea del tiempo** (Triásico / Jurásico / Cretácico) para enseñar cuándo
+  vivió cada uno de verdad.
+- **Pipeline de modelos 3D**: si un dino define `modelUrl`, se carga un **GLB
+  real animado** (`useGLTF` + `useAnimations`); si no, se dibuja un dinosaurio
+  **procedural low-poly** para que el prototipo funcione offline sin assets.
+  Cómo añadir modelos CC0 reales: ver [`public/models/README.md`](public/models/README.md).
+
 ## Efectos visuales y rendimiento
 
 - **Postprocesado** (`@react-three/postprocessing`): bloom + viñeta para que el
