@@ -2,6 +2,7 @@ import { Suspense, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF, useAnimations } from '@react-three/drei';
+import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { Dino } from '../../data/dinos';
 import { getModelUrl } from '../../utils/models';
 
@@ -38,22 +39,17 @@ export default function DinoModel({ dino, moving = true }: { dino: Dino; moving?
 /* ------------------------------------------------------------------ */
 function GltfDino({ url, moving }: { url: string; moving: boolean }) {
   const { scene, animations } = useGLTF(url);
-  // Clona y normaliza: altura ~3 unidades y base apoyada en el suelo, centrado.
-  // Así cualquier GLB (venga en la escala que venga) se ve a un tamaño coherente.
-  const cloned = useMemo(() => {
-    const s = scene.clone(true);
-    s.position.set(0, 0, 0);
-    s.scale.setScalar(1);
-    s.updateWorldMatrix(true, true);
-    const box = new THREE.Box3().setFromObject(s);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    s.scale.setScalar(3 / (size.y || 1));
-    s.updateWorldMatrix(true, true);
-    const box2 = new THREE.Box3().setFromObject(s);
-    s.position.set(-(box2.min.x + box2.max.x) / 2, -box2.min.y, -(box2.min.z + box2.max.z) / 2);
-    return s;
-  }, [scene]);
+  // SkeletonUtils.clone clona correctamente mallas con esqueleto (animadas);
+  // scene.clone() las rompe (siguen al esqueleto original → salen gigantes y
+  // en el centro). La escala/centrado se aplican a un grupo contenedor.
+  const cloned = useMemo(() => skeletonClone(scene), [scene]);
+  const fit = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(cloned);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const k = 3 / (size.y || 1); // altura normalizada a ~3 unidades
+    return { k, offset: [-center.x * k, -box.min.y * k, -center.z * k] as [number, number, number] };
+  }, [cloned]);
   const { actions, names } = useAnimations(animations, cloned);
 
   useEffect(() => {
@@ -69,7 +65,11 @@ function GltfDino({ url, moving }: { url: string; moving: boolean }) {
     };
   }, [actions, names, moving]);
 
-  return <primitive object={cloned} castShadow receiveShadow />;
+  return (
+    <group scale={fit.k} position={fit.offset}>
+      <primitive object={cloned} />
+    </group>
+  );
 }
 
 /* ------------------------------------------------------------------ */
