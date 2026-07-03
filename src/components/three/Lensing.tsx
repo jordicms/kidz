@@ -22,10 +22,13 @@ const fragmentShader = /* glsl */ `
     vec2 dir = dist > 0.0001 ? d / dist : vec2(0.0);
     vec2 off = dir * bend;
     off.x /= uAspect;
-    vec2 suv = clamp(uv - off, 0.0, 1.0);
-    vec4 col = texture(inputBuffer, suv);
+    // Dispersión cromática: cada color se curva un poco distinto (arcoíris
+    // gravitacional en el borde del horizonte).
+    float r = texture(inputBuffer, clamp(uv - off * 1.07, 0.0, 1.0)).r;
+    float g = texture(inputBuffer, clamp(uv - off, 0.0, 1.0)).g;
+    float b = texture(inputBuffer, clamp(uv - off * 0.93, 0.0, 1.0)).b;
     float shadow = smoothstep(uRadius * 0.82, uRadius, dist);
-    outputColor = vec4(col.rgb * shadow, 1.0);
+    outputColor = vec4(vec3(r, g, b) * shadow, 1.0);
   }
 `;
 

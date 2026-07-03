@@ -1,10 +1,60 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { PerformanceMonitor } from '@react-three/drei';
 import { useApp } from '../../state/store';
 import { createGlowTexture } from '../../utils/textures';
 import { getSurfaceTextureUrl } from '../../utils/surfaceTextures';
+
+/**
+ * Vuelo de entrada cinematográfico: la cámara llega desde lejos al montar la
+ * escena. Desactiva los controles durante la animación y los devuelve al final.
+ */
+export function IntroFly({
+  from,
+  to,
+  look = [0, 0, 0],
+  duration = 2.2,
+  controls,
+}: {
+  from: [number, number, number];
+  to: [number, number, number];
+  look?: [number, number, number];
+  duration?: number;
+  controls?: RefObject<{ enabled: boolean } | null>;
+}) {
+  const camera = useThree((s) => s.camera);
+  const anim = useRef<{ t: number } | null>(null);
+  const vecs = useMemo(
+    () => ({
+      from: new THREE.Vector3(...from),
+      to: new THREE.Vector3(...to),
+      look: new THREE.Vector3(...look),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  useEffect(() => {
+    camera.position.copy(vecs.from);
+    anim.current = { t: 0 };
+  }, [camera, vecs]);
+
+  useFrame((_, delta) => {
+    const a = anim.current;
+    if (!a) return;
+    if (controls?.current) controls.current.enabled = false;
+    a.t = Math.min(1, a.t + delta / duration);
+    const e = 1 - Math.pow(1 - a.t, 3);
+    camera.position.lerpVectors(vecs.from, vecs.to, e);
+    camera.lookAt(vecs.look);
+    if (a.t >= 1) {
+      anim.current = null;
+      if (controls?.current) controls.current.enabled = true;
+    }
+  });
+  return null;
+}
 
 /**
  * Fondo estelar real (mapa equirectangular de la Vía Láctea) si está descargado
