@@ -1,18 +1,26 @@
-import { useApp } from './state/store';
+import { lazy, Suspense, useEffect } from 'react';
+import { useApp, type View } from './state/store';
 import HomeScreen from './screens/HomeScreen';
-import SolarSystemScene from './scenes/SolarSystemScene';
-import PlanetScene from './scenes/PlanetScene';
-import GalaxyScene from './scenes/GalaxyScene';
-import UniverseScene from './scenes/UniverseScene';
-import BlackHoleScene from './scenes/BlackHoleScene';
-import DinoIslandScene from './scenes/DinoIslandScene';
-import DinoScene from './scenes/DinoScene';
-import BodyScene from './scenes/BodyScene';
-import OrganScene from './scenes/OrganScene';
-import JourneyScene from './scenes/JourneyScene';
+import PassportScreen from './screens/PassportScreen';
 import DeepSpaceStory from './components/ui/DeepSpaceStory';
 import SceneTransition from './components/ui/SceneTransition';
 import { DINOS, ERA_COLORS, ERAS } from './data/dinos';
+import { startAmbient, stopAmbient, type AmbientKind } from './utils/sound';
+
+// Code-splitting: cada escena 3D se carga bajo demanda (three.js y compañía
+// no entran en el arranque de la app → inicio mucho más rápido, clave en móvil).
+const SolarSystemScene = lazy(() => import('./scenes/SolarSystemScene'));
+const PlanetScene = lazy(() => import('./scenes/PlanetScene'));
+const GalaxyScene = lazy(() => import('./scenes/GalaxyScene'));
+const UniverseScene = lazy(() => import('./scenes/UniverseScene'));
+const BlackHoleScene = lazy(() => import('./scenes/BlackHoleScene'));
+const DinoIslandScene = lazy(() => import('./scenes/DinoIslandScene'));
+const DinoScene = lazy(() => import('./scenes/DinoScene'));
+const BodyScene = lazy(() => import('./scenes/BodyScene'));
+const OrganScene = lazy(() => import('./scenes/OrganScene'));
+const JourneyScene = lazy(() => import('./scenes/JourneyScene'));
+const OceanScene = lazy(() => import('./scenes/OceanScene'));
+const SeaCreatureScene = lazy(() => import('./scenes/SeaCreatureScene'));
 
 const TITLES = {
   solar: { title: '🪐 El Sistema Solar', hint: 'Toca un planeta para conocerlo' },
@@ -21,7 +29,48 @@ const TITLES = {
   blackhole: { title: '🕳️ Sagitario A*', hint: 'El agujero negro de la Vía Láctea' },
   'dino-island': { title: '🦖 La Isla de los Dinosaurios', hint: 'Toca un dinosaurio para conocerlo' },
   body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
+  ocean: { title: '🐳 El Océano', hint: 'Baja hasta lo más profundo' },
 } as const;
+
+/** Ambiente sonoro por vista (null = silencio). */
+const AMBIENT_BY_VIEW: Record<View, AmbientKind | null> = {
+  home: null,
+  passport: null,
+  solar: 'space',
+  planet: 'space',
+  galaxy: 'space',
+  universe: 'space',
+  blackhole: 'space',
+  'dino-island': 'island',
+  dino: 'island',
+  body: 'body',
+  organ: 'body',
+  journey: 'body',
+  ocean: 'ocean',
+  sea: 'ocean',
+};
+
+function AmbientAudio() {
+  const view = useApp((s) => s.view);
+  const muted = useApp((s) => s.muted);
+  useEffect(() => {
+    const kind = muted ? null : AMBIENT_BY_VIEW[view];
+    if (kind) startAmbient(kind);
+    else stopAmbient();
+  }, [view, muted]);
+  useEffect(() => () => stopAmbient(), []);
+  return null;
+}
+
+function MuteButton() {
+  const muted = useApp((s) => s.muted);
+  const toggleMuted = useApp((s) => s.toggleMuted);
+  return (
+    <button className="btn btn-round" onClick={toggleMuted} title={muted ? 'Activar sonido' : 'Silenciar'}>
+      {muted ? '🔇' : '🔊'}
+    </button>
+  );
+}
 
 /** Línea del tiempo: en qué era vivió cada dinosaurio de la isla. */
 function DinoTimeline() {
@@ -55,11 +104,11 @@ function SpeedButton() {
 
 function Hud() {
   const view = useApp((s) => s.view);
-  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, openDeepSpace } = useApp();
+  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openDeepSpace } = useApp();
 
-  if (view === 'home') return null;
+  if (view === 'home' || view === 'passport') return null;
 
-  const isDetail = view === 'planet' || view === 'dino' || view === 'organ' || view === 'journey';
+  const isDetail = view === 'planet' || view === 'dino' || view === 'organ' || view === 'journey' || view === 'sea';
   const back =
     view === 'planet' ? goSolar
     : view === 'galaxy' ? goSolar
@@ -68,6 +117,7 @@ function Hud() {
     : view === 'dino' ? goDinoIsland
     : view === 'organ' ? goBody
     : view === 'journey' ? goBody
+    : view === 'sea' ? goOcean
     : goHome;
   const showSpeed = view === 'solar' || view === 'dino-island';
 
@@ -83,7 +133,10 @@ function Hud() {
             <small>{TITLES[view as keyof typeof TITLES].hint}</small>
           </div>
         )}
-        {showSpeed ? <SpeedButton /> : <span style={{ width: 48 }} />}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {showSpeed && <SpeedButton />}
+          <MuteButton />
+        </div>
       </div>
 
       <div className="hud-bottom">
@@ -113,25 +166,41 @@ function Hud() {
   );
 }
 
+/** Pantalla de carga de una escena (mientras llega su código). */
+function SceneLoader() {
+  return (
+    <div className="scene-loader">
+      <span className="loader-emoji">🚀</span>
+      <p>Viajando…</p>
+    </div>
+  );
+}
+
 export default function App() {
   const view = useApp((s) => s.view);
 
   return (
     <div className="app">
       {view === 'home' && <HomeScreen />}
-      {view === 'solar' && <SolarSystemScene />}
-      {view === 'planet' && <PlanetScene />}
-      {view === 'galaxy' && <GalaxyScene />}
-      {view === 'universe' && <UniverseScene />}
-      {view === 'blackhole' && <BlackHoleScene />}
-      {view === 'dino-island' && <DinoIslandScene />}
-      {view === 'dino' && <DinoScene />}
-      {view === 'body' && <BodyScene />}
-      {view === 'organ' && <OrganScene />}
-      {view === 'journey' && <JourneyScene />}
+      {view === 'passport' && <PassportScreen />}
+      <Suspense fallback={<SceneLoader />}>
+        {view === 'solar' && <SolarSystemScene />}
+        {view === 'planet' && <PlanetScene />}
+        {view === 'galaxy' && <GalaxyScene />}
+        {view === 'universe' && <UniverseScene />}
+        {view === 'blackhole' && <BlackHoleScene />}
+        {view === 'dino-island' && <DinoIslandScene />}
+        {view === 'dino' && <DinoScene />}
+        {view === 'body' && <BodyScene />}
+        {view === 'organ' && <OrganScene />}
+        {view === 'journey' && <JourneyScene />}
+        {view === 'ocean' && <OceanScene />}
+        {view === 'sea' && <SeaCreatureScene />}
+      </Suspense>
       <Hud />
       <DeepSpaceStory />
       <SceneTransition />
+      <AmbientAudio />
     </div>
   );
 }

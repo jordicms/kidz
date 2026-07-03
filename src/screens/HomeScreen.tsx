@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import { useApp } from '../state/store';
 
-const LOCKED_CHAPTERS = [
-  { emoji: '🐳', title: 'El Océano', desc: 'Sumérgete hasta lo más profundo' },
-];
-
 export default function HomeScreen() {
   const goSolar = useApp((s) => s.goSolar);
   const goDinoIsland = useApp((s) => s.goDinoIsland);
   const goBody = useApp((s) => s.goBody);
+  const goOcean = useApp((s) => s.goOcean);
+  const goPassport = useApp((s) => s.goPassport);
+  const visited = useApp((s) => s.visited);
+  const stamps = Object.keys(visited).length;
 
   const stars = useMemo(
     () =>
@@ -49,15 +49,15 @@ export default function HomeScreen() {
           <h3>El Cuerpo Humano</h3>
           <p>Un viaje dentro de ti</p>
         </button>
-        {LOCKED_CHAPTERS.map((c) => (
-          <div className="chapter-card locked" key={c.title}>
-            <span className="chapter-emoji">{c.emoji}</span>
-            <h3>{c.title}</h3>
-            <p>{c.desc}</p>
-            <span className="soon">Próximamente</span>
-          </div>
-        ))}
+        <button className="chapter-card" onClick={goOcean}>
+          <span className="chapter-emoji">🐳</span>
+          <h3>El Océano</h3>
+          <p>Sumérgete hasta lo más profundo</p>
+        </button>
       </div>
+      <button className="btn passport-btn" onClick={goPassport}>
+        🎒 Mi pasaporte {stamps > 0 && <span className="passport-badge">{stamps}</span>}
+      </button>
     </div>
   );
 }
