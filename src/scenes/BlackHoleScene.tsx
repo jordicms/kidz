@@ -2,27 +2,25 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
 import { Lensing } from '../components/three/Lensing';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
 
-/** Postprocesado del agujero negro: lente gravitacional (gama media/alta) + bloom. */
+/** Postprocesado del agujero negro: lente gravitacional + bloom + ACES. */
 function BlackHoleEffects() {
   const quality = useApp((s) => s.quality);
   const size = useThree((s) => s.size);
   if (!quality.postprocessing) return null;
   return (
     <EffectComposer multisampling={quality.antialias ? 4 : 0}>
-      {quality.tier !== 'low' ? (
-        <Lensing radius={0.2} strength={0.14} aspect={size.width / size.height} />
-      ) : (
-        <></>
-      )}
+      <Lensing radius={0.2} strength={0.14} aspect={size.width / size.height} />
       <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
       <Vignette eskil={false} offset={0.25} darkness={0.75} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );
 }

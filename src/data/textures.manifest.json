@@ -5,6 +5,8 @@
     { "key": "mercurio", "url": "https://www.solarsystemscope.com/textures/download/2k_mercury.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
     { "key": "venus", "url": "https://www.solarsystemscope.com/textures/download/2k_venus_surface.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
     { "key": "tierra", "url": "https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
+    { "key": "tierra-night", "url": "https://www.solarsystemscope.com/textures/download/2k_earth_nightmap.jpg", "credit": "Solar System Scope (luces nocturnas)", "license": "CC-BY-4.0" },
+    { "key": "tierra-clouds", "url": "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg", "credit": "Solar System Scope (nubes)", "license": "CC-BY-4.0" },
     { "key": "marte", "url": "https://www.solarsystemscope.com/textures/download/2k_mars.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
     { "key": "jupiter", "url": "https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },
     { "key": "saturno", "url": "https://www.solarsystemscope.com/textures/download/2k_saturn.jpg", "credit": "Solar System Scope", "license": "CC-BY-4.0" },

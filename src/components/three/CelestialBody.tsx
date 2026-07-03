@@ -3,7 +3,10 @@ import * as THREE from 'three';
 import type { Body } from '../../data/types';
 import { createBodyTexture, createRingTexture, createGlowTexture } from '../../utils/textures';
 import { getSurfaceTextureUrl } from '../../utils/surfaceTextures';
+import { useApp } from '../../state/store';
 import Atmosphere from './Atmosphere';
+import SunSurface from './SunSurface';
+import PlanetSurface from './PlanetSurface';
 
 interface Props {
   body: Body;
@@ -16,6 +19,8 @@ export default function CelestialBody({ body, scale = 1 }: Props) {
   const size = body.scene.size * scale;
   const procedural = useMemo(() => createBodyTexture(body.id, body.texture), [body]);
   const isSun = body.kind === 'estrella';
+  // En gama media/alta se usan shaders (sol vivo, día/noche); en baja, materiales simples.
+  const fancy = useApp((s) => s.quality.tier !== 'low');
 
   // Si hay una textura real (mapa equirectangular) para este astro, se usa;
   // si no, se mantiene la procedural. Carga asíncrona sin Suspense.
@@ -52,15 +57,28 @@ export default function CelestialBody({ body, scale = 1 }: Props) {
 
   return (
     <group rotation={[0, 0, body.scene.tilt ?? 0]}>
-      <mesh>
-        <sphereGeometry args={[size, 48, 48]} />
-        {isSun ? (
-          // toneMapped=false mantiene el color a tope para que el bloom lo capte.
-          <meshBasicMaterial map={texture} toneMapped={false} />
+      {isSun ? (
+        fancy ? (
+          <SunSurface size={size} />
         ) : (
+          <mesh>
+            <sphereGeometry args={[size, 48, 48]} />
+            <meshBasicMaterial map={texture} toneMapped={false} />
+          </mesh>
+        )
+      ) : fancy ? (
+        <PlanetSurface
+          bodyId={body.id}
+          size={size}
+          map={texture}
+          spec={body.id === 'tierra' ? 0.5 : 0.06}
+        />
+      ) : (
+        <mesh>
+          <sphereGeometry args={[size, 48, 48]} />
           <meshStandardMaterial map={texture} roughness={0.9} metalness={0} />
-        )}
-      </mesh>
+        </mesh>
+      )}
       {isSun && glow && corona && (
         <>
           <sprite scale={[size * 5.2, size * 5.2, 1]}>
