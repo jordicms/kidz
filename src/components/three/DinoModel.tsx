@@ -1,8 +1,7 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, useAnimations } from '@react-three/drei';
-import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { useGLTF } from '@react-three/drei';
 import type { Dino } from '../../data/dinos';
 import { getModelUrl } from '../../utils/models';
 
@@ -38,49 +37,61 @@ export default function DinoModel({ dino, moving = true }: { dino: Dino; moving?
 /* Carga de modelo GLB real (Quaternius / Poly Pizza / Sketchfab CC0)  */
 /* ------------------------------------------------------------------ */
 function GltfDino({ url, moving }: { url: string; moving: boolean }) {
-  const { scene, animations } = useGLTF(url);
-  // SkeletonUtils.clone clona correctamente mallas con esqueleto (animadas);
-  // scene.clone() las rompe (siguen al esqueleto original → salen gigantes y
-  // en el centro). La escala/centrado se aplican a un grupo contenedor.
-  const cloned = useMemo(() => {
-    const c = skeletonClone(scene);
-    // Las mallas con esqueleto se "salen" del frustum y three las descarta
-    // (se ven invisibles). Desactivamos el culling y recomputamos sus límites.
-    c.traverse((o) => {
-      o.frustumCulled = false;
+  const { scene } = useGLTF(url);
+  // Los GLB con esqueleto (skinned) no se renderizan de forma fiable al
+  // clonarlos, así que APLANAMOS el modelo a mallas estáticas en su pose de
+  // reposo: se copia cada malla con su transformación mundial ya "horneada".
+  // Siempre visible, mucho más ligero (sin mixers ni skinning por frame), y
+  // la vida se la damos por código (balanceo + trote), como a los procedurales.
+  const { object, fit } = useMemo(() => {
+    scene.updateWorldMatrix(true, true);
+    const flat = new THREE.Group();
+    scene.traverse((o) => {
       const m = o as THREE.Mesh;
-      if (m.isMesh && m.geometry) m.geometry.computeBoundingBox?.();
+      if (m.isMesh && m.geometry) {
+        const inst = new THREE.Mesh(m.geometry, m.material);
+        inst.matrixAutoUpdate = false;
+        inst.matrix.copy(m.matrixWorld);
+        inst.castShadow = true;
+        flat.add(inst);
+      }
     });
-    return c;
-  }, [scene]);
-  const fit = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(cloned);
+    flat.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(flat);
     if (box.isEmpty() || !Number.isFinite(box.min.y)) {
-      return { k: 1, offset: [0, 0, 0] as [number, number, number] };
+      return { object: flat, fit: { k: 1, offset: [0, 0, 0] as [number, number, number] } };
     }
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const k = size.y > 0 ? 3 / size.y : 1; // altura normalizada a ~3 unidades
-    return { k, offset: [-center.x * k, -box.min.y * k, -center.z * k] as [number, number, number] };
-  }, [cloned]);
-  const { actions, names } = useAnimations(animations, cloned);
-
-  useEffect(() => {
-    if (!names.length) return;
-    const pick =
-      names.find((n) => (moving ? /walk|run/i : /idle/i).test(n)) ??
-      names.find((n) => /walk|idle/i.test(n)) ??
-      names[0];
-    const action = actions[pick];
-    action?.reset().fadeIn(0.25).play();
-    return () => {
-      action?.fadeOut(0.25);
+    return {
+      object: flat,
+      fit: { k, offset: [-center.x * k, -box.min.y * k, -center.z * k] as [number, number, number] },
     };
-  }, [actions, names, moving]);
+  }, [scene]);
+
+  // Vida procedural: trote (bote + balanceo) al moverse, respiración en reposo.
+  const sway = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = sway.current;
+    if (!g) return;
+    const t = clock.elapsedTime;
+    if (moving) {
+      g.position.y = Math.abs(Math.sin(t * 6)) * 0.1;
+      g.rotation.z = Math.sin(t * 6) * 0.035;
+      g.rotation.x = Math.sin(t * 3) * 0.02;
+    } else {
+      g.position.y = Math.sin(t * 1.4) * 0.03;
+      g.rotation.z = Math.sin(t * 0.9) * 0.01;
+      g.rotation.x = 0;
+    }
+  });
 
   return (
-    <group scale={fit.k} position={fit.offset}>
-      <primitive object={cloned} />
+    <group ref={sway}>
+      <group scale={fit.k} position={fit.offset}>
+        <primitive object={object} />
+      </group>
     </group>
   );
 }

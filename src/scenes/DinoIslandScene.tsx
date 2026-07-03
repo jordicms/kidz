@@ -6,9 +6,11 @@ import { DINOS, ERA_COLORS, type Dino } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
+import { createGlowTexture } from '../utils/textures';
 import DinoModel from '../components/three/DinoModel';
-import Effects from '../components/three/Effects';
-import { AdaptiveQuality } from '../components/three/SceneExtras';
+import { AdaptiveQuality, IntroFly } from '../components/three/SceneExtras';
+import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 
 /** Un árbol low-poly (copa cónica + tronco). */
 function Tree({ position, scale }: { position: [number, number, number]; scale: number }) {
@@ -258,18 +260,205 @@ function Island() {
         <cylinderGeometry args={[20, 21, 0.9, 48]} />
         <meshStandardMaterial color="#e6d59a" flatShading roughness={1} />
       </mesh>
-      {/* Volcán al fondo */}
-      <group position={[-9, 0, -9]}>
-        <mesh position={[0, 2.2, 0]} castShadow>
-          <coneGeometry args={[4, 5, 20]} />
-          <meshStandardMaterial color="#6b5648" flatShading roughness={1} />
-        </mesh>
-        <mesh position={[0, 4.7, 0]}>
-          <coneGeometry args={[1.2, 1, 16]} />
-          <meshStandardMaterial color="#ff7a30" emissive="#ff5a1a" emissiveIntensity={1.4} toneMapped={false} />
+    </group>
+  );
+}
+
+/** Volcán VIVO: lava que palpita, columna de humo, chispas y luz naranja. */
+function Volcano() {
+  const quality = useApp((s) => s.quality);
+  const lava = useRef<THREE.MeshStandardMaterial>(null);
+  const light = useRef<THREE.PointLight>(null);
+  const smokeRefs = useRef<(THREE.Sprite | null)[]>([]);
+  const emberRefs = useRef<(THREE.Sprite | null)[]>([]);
+  const smokeMap = useMemo(() => createGlowTexture('smoke-puff', 'rgba(120,110,115,0.9)'), []);
+  const emberMap = useMemo(() => createGlowTexture('ember', 'rgba(255,160,60,1)'), []);
+  const nSmoke = quality.tier === 'low' ? 0 : 6;
+  const nEmber = quality.tier === 'low' ? 0 : 8;
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const pulse = 1.1 + Math.sin(t * 2.1) * 0.4 + Math.sin(t * 5.3) * 0.2;
+    if (lava.current) lava.current.emissiveIntensity = pulse;
+    if (light.current) light.current.intensity = 2 + pulse * 1.5;
+    for (let i = 0; i < nSmoke; i++) {
+      const s = smokeRefs.current[i];
+      if (!s) continue;
+      const k = (t * 0.12 + i / nSmoke) % 1;
+      s.position.set(Math.sin(i * 2.3 + t * 0.4) * (0.3 + k), 5 + k * 4.5, Math.cos(i * 1.7) * 0.3);
+      s.scale.setScalar(0.9 + k * 2.6);
+      (s.material as THREE.SpriteMaterial).opacity = (1 - k) * 0.4;
+    }
+    for (let i = 0; i < nEmber; i++) {
+      const e = emberRefs.current[i];
+      if (!e) continue;
+      const k = (t * 0.55 + i / nEmber) % 1;
+      e.position.set(Math.sin(i * 2.1) * k, 4.7 + k * 2.4, Math.cos(i * 1.3) * k);
+      e.scale.setScalar(0.14 + (1 - k) * 0.12);
+      (e.material as THREE.SpriteMaterial).opacity = 1 - k;
+    }
+  });
+
+  return (
+    <group position={[-9, 0, -9]}>
+      <mesh position={[0, 2.2, 0]} castShadow>
+        <coneGeometry args={[4, 5, 20]} />
+        <meshStandardMaterial color="#6b5648" flatShading roughness={1} />
+      </mesh>
+      <mesh position={[0, 4.7, 0]}>
+        <coneGeometry args={[1.2, 1, 16]} />
+        <meshStandardMaterial ref={lava} color="#ff7a30" emissive="#ff5a1a" emissiveIntensity={1.4} toneMapped={false} />
+      </mesh>
+      <pointLight ref={light} position={[0, 5.4, 0]} color="#ff7a30" intensity={3} distance={16} decay={2} />
+      {Array.from({ length: nSmoke }).map((_, i) => (
+        <sprite
+          key={`s${i}`}
+          ref={(el) => {
+            smokeRefs.current[i] = el;
+          }}
+        >
+          <spriteMaterial map={smokeMap} transparent depthWrite={false} opacity={0.35} />
+        </sprite>
+      ))}
+      {Array.from({ length: nEmber }).map((_, i) => (
+        <sprite
+          key={`e${i}`}
+          ref={(el) => {
+            emberRefs.current[i] = el;
+          }}
+        >
+          <spriteMaterial map={emberMap} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </sprite>
+      ))}
+    </group>
+  );
+}
+
+/** Palmera low-poly con tronco curvado y hojas en abanico. */
+function Palm({ position, rotation = 0, scale = 1 }: { position: [number, number, number]; rotation?: number; scale?: number }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
+      <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0.12]} castShadow>
+        <cylinderGeometry args={[0.09, 0.13, 1, 6]} />
+        <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+      </mesh>
+      <mesh position={[0.16, 1.3, 0]} rotation={[0, 0, 0.24]} castShadow>
+        <cylinderGeometry args={[0.07, 0.09, 1, 6]} />
+        <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+      </mesh>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <group key={i} position={[0.32, 1.85, 0]} rotation={[0, (i / 6) * Math.PI * 2, 0]}>
+          <mesh position={[0.55, 0.05, 0]} rotation={[0, 0, -1.95]} scale={[0.3, 1.15, 0.06]} castShadow>
+            <coneGeometry args={[0.5, 1, 4]} />
+            <meshStandardMaterial color="#3f9e4d" flatShading roughness={1} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Flores de colores salpicadas por la hierba. */
+function Flowers({ count }: { count: number }) {
+  const flowers = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => {
+        const a = (i * 2.399) % (Math.PI * 2);
+        const r = 3 + ((i * 53) % 130) / 10;
+        return {
+          key: i,
+          pos: [Math.cos(a) * r, -0.02, Math.sin(a) * r] as [number, number, number],
+          color: ['#ff6ec7', '#ffd166', '#ffffff', '#ff8c42'][i % 4],
+          s: 0.7 + ((i * 13) % 5) / 10,
+        };
+      }),
+    [count],
+  );
+  return (
+    <>
+      {flowers.map((f) => (
+        <group key={f.key} position={f.pos} scale={f.s}>
+          <mesh position={[0, 0.12, 0]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.24, 4]} />
+            <meshStandardMaterial color="#3f7d3a" flatShading />
+          </mesh>
+          <mesh position={[0, 0.28, 0]}>
+            <sphereGeometry args={[0.08, 6, 6]} />
+            <meshStandardMaterial color={f.color} flatShading />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
+/** Mariposa que revolotea por la isla batiendo las alas. */
+function Butterfly({ seed }: { seed: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const wingL = useRef<THREE.Group>(null);
+  const wingR = useRef<THREE.Group>(null);
+  const color = ['#ff6ec7', '#ffd166', '#7fb3ff', '#b8f26e'][seed % 4];
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime * (0.22 + (seed % 3) * 0.06) + seed * 2.1;
+    const r = 4 + (seed % 5) * 2.4;
+    const g = ref.current;
+    if (g) {
+      g.position.set(Math.cos(t) * r, 1.1 + Math.sin(t * 2.3 + seed) * 0.5, Math.sin(t) * r);
+      g.rotation.y = -t + Math.PI / 2;
+    }
+    const flap = Math.sin(clock.elapsedTime * 13 + seed) * 0.85;
+    if (wingL.current) wingL.current.rotation.z = flap;
+    if (wingR.current) wingR.current.rotation.z = -flap;
+  });
+  return (
+    <group ref={ref} scale={0.2}>
+      <group ref={wingL}>
+        <mesh position={[-0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[1, 0.8]} />
+          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
         </mesh>
       </group>
+      <group ref={wingR}>
+        <mesh position={[0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[1, 0.8]} />
+          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      <mesh>
+        <capsuleGeometry args={[0.07, 0.5, 3, 6]} />
+        <meshBasicMaterial color="#40342a" />
+      </mesh>
     </group>
+  );
+}
+
+/** Espuma en la orilla, latiendo como olas que rompen. */
+function ShoreFoam() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    ref.current?.scale.setScalar(1 + Math.sin(t * 0.8) * 0.012);
+    const m = ref.current?.material as THREE.MeshBasicMaterial | undefined;
+    if (m) m.opacity = 0.22 + Math.sin(t * 0.8) * 0.08;
+  });
+  return (
+    <mesh ref={ref} position={[0, -0.58, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[20.6, 21.6, 64]} />
+      <meshBasicMaterial color="#eaf6ff" transparent opacity={0.25} depthWrite={false} />
+    </mesh>
+  );
+}
+
+/** Postprocesado de la isla: bloom contenido (escena diurna) + ACES. */
+function IslandEffects() {
+  const quality = useApp((s) => s.quality);
+  if (!quality.postprocessing) return null;
+  return (
+    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
+      <Bloom intensity={0.55} luminanceThreshold={0.85} luminanceSmoothing={0.2} mipmapBlur radius={0.6} />
+      <Vignette eskil={false} offset={0.3} darkness={0.55} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    </EffectComposer>
   );
 }
 
@@ -331,6 +520,7 @@ function Clouds() {
 export default function DinoIslandScene() {
   const quality = useApp((s) => s.quality);
   const registry = useMemo<Registry>(() => new Map(), []);
+  const controlsRef = useRef<{ enabled: boolean } | null>(null);
   const trees = useMemo(() => {
     const n = scaleCount(16, quality, 6);
     return Array.from({ length: n }, (_, i) => {
@@ -343,6 +533,21 @@ export default function DinoIslandScene() {
       };
     });
   }, [quality]);
+  const palms = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, i) => {
+        const a = (i / 9) * Math.PI * 2 + 0.25;
+        const r = 18.6 + ((i * 7) % 3) * 0.5;
+        return {
+          key: i,
+          position: [Math.cos(a) * r, -0.1, Math.sin(a) * r] as [number, number, number],
+          rotation: a + 1.2,
+          scale: 0.9 + ((i * 11) % 5) / 10,
+        };
+      }),
+    [],
+  );
+  const butterflies = quality.tier === 'low' ? 2 : 5;
 
   return (
     <div className="scene-canvas">
@@ -367,23 +572,34 @@ export default function DinoIslandScene() {
           shadow-camera-bottom={-30}
         />
         <Island />
+        <Volcano />
         <Water />
+        <ShoreFoam />
         <Clouds />
         {trees.map((t) => (
           <Tree key={t.key} position={t.position} scale={t.scale} />
+        ))}
+        {palms.map((p) => (
+          <Palm key={p.key} position={p.position} rotation={p.rotation} scale={p.scale} />
+        ))}
+        <Flowers count={scaleCount(20, quality, 8)} />
+        {Array.from({ length: butterflies }).map((_, i) => (
+          <Butterfly key={i} seed={i + 1} />
         ))}
         {DINOS.map((d) => (
           <DinoActor key={d.id} dino={d} registry={registry} />
         ))}
         <OrbitControls
+          ref={controlsRef as never}
           enablePan={false}
           minDistance={10}
           maxDistance={50}
           maxPolarAngle={Math.PI * 0.49}
           target={[0, 1, 0]}
         />
+        <IntroFly from={[0, 30, 64]} to={[0, 12, 26]} look={[0, 1, 0]} duration={2.6} controls={controlsRef} />
         <AdaptiveQuality />
-        <Effects />
+        <IslandEffects />
       </Canvas>
     </div>
   );
