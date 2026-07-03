@@ -373,6 +373,53 @@ export function createAccretionTexture(): THREE.Texture {
 }
 
 /**
+ * Estrella con picos de difracción (como en las fotos de telescopio): núcleo
+ * brillante + cruz de destellos. Para estrellas jóvenes, púlsares y cuásares.
+ */
+export function createFlareTexture(key: string, inner: string): THREE.Texture {
+  const cacheKey = `flare:${key}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const size = 256;
+  const { canvas, ctx } = makeCanvas(size, size);
+  const c = size / 2;
+
+  const spike = (angle: number, len: number, w: number, alpha: number) => {
+    ctx.save();
+    ctx.translate(c, c);
+    ctx.rotate(angle);
+    ctx.scale(1, w);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, len);
+    g.addColorStop(0, fadeColor(inner, alpha));
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, len, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  // Cruz principal + cruz diagonal tenue
+  spike(0, c * 0.95, 0.045, 0.9);
+  spike(Math.PI / 2, c * 0.95, 0.045, 0.9);
+  spike(Math.PI / 4, c * 0.55, 0.03, 0.5);
+  spike(-Math.PI / 4, c * 0.55, 0.03, 0.5);
+  // Núcleo
+  const g = ctx.createRadialGradient(c, c, 0, c, c, c * 0.3);
+  g.addColorStop(0, inner);
+  g.addColorStop(0.4, fadeColor(inner, 0.6));
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(c, c, c * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  cache.set(cacheKey, texture);
+  return texture;
+}
+
+/**
  * Halo de galaxia espiral dibujado en canvas: bulbo central cálido, brazos
  * luminosos (mismo trazado espiral que generateGalaxy: ángulo = rama + r·0.385),
  * regiones rosadas de formación estelar y vetas oscuras de polvo. Aplicado en
