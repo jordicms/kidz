@@ -8,7 +8,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
 import { Lensing } from '../components/three/Lensing';
-import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
+import { AdaptiveQuality, IntroFly, SpaceBackground } from '../components/three/SceneExtras';
 
 /** Postprocesado del agujero negro: lente gravitacional + bloom + ACES. */
 function BlackHoleEffects() {
@@ -29,9 +29,12 @@ const HORIZON = 1.1;
 const DISK_INNER = 1.6;
 const DISK_OUTER = 6;
 
-/** Disco de acreción plano con UV radial (degradado caliente→frío) que gira. */
+/** Disco de acreción con UV radial, vetas de plasma y dos capas girando a
+ *  distinta velocidad (remolino visible). El Doppler tiñe de azul-blanco el
+ *  lado que se acerca y de rojo oscuro el que se aleja, como en las fotos. */
 function AccretionDisk() {
   const ref = useRef<THREE.Mesh>(null);
+  const ref2 = useRef<THREE.Mesh>(null);
   const map = useMemo(() => createAccretionTexture(), []);
   const geometry = useMemo(() => {
     const g = new THREE.RingGeometry(DISK_INNER, DISK_OUTER, 160, 1);
@@ -44,11 +47,12 @@ function AccretionDisk() {
       const r = Math.hypot(x, y);
       const ang = Math.atan2(y, x);
       uv.setXY(i, (r - DISK_INNER) / (DISK_OUTER - DISK_INNER), (ang + Math.PI) / (Math.PI * 2));
-      // Doppler: el lado que se acerca (un costado) brilla bastante más.
-      const doppler = 0.45 + 1.15 * (0.5 + 0.5 * Math.cos(ang));
-      colors[i * 3] = doppler;
-      colors[i * 3 + 1] = doppler;
-      colors[i * 3 + 2] = doppler;
+      // Doppler relativista: el lado que se acerca es más brillante Y más azul.
+      const d = 0.5 + 0.5 * Math.cos(ang);
+      const b = 0.4 + 1.35 * d;
+      colors[i * 3] = b;
+      colors[i * 3 + 1] = b * (0.8 + 0.2 * d);
+      colors[i * 3 + 2] = b * (0.55 + 0.5 * d);
     }
     uv.needsUpdate = true;
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -57,20 +61,36 @@ function AccretionDisk() {
 
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.z += delta * 0.5;
+    if (ref2.current) ref2.current.rotation.z += delta * 0.82;
   });
 
   return (
-    <mesh ref={ref} geometry={geometry} rotation={[-Math.PI / 2.6, 0, 0]}>
-      <meshBasicMaterial
-        map={map}
-        vertexColors
-        transparent
-        side={THREE.DoubleSide}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        toneMapped={false}
-      />
-    </mesh>
+    <>
+      <mesh ref={ref} geometry={geometry} rotation={[-Math.PI / 2.6, 0, 0]}>
+        <meshBasicMaterial
+          map={map}
+          vertexColors
+          transparent
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Segunda capa más rápida y tenue: el plasma parece hervir */}
+      <mesh ref={ref2} geometry={geometry} rotation={[-Math.PI / 2.6, 0, 1.9]} scale={0.985}>
+        <meshBasicMaterial
+          map={map}
+          vertexColors
+          transparent
+          opacity={0.55}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
+    </>
   );
 }
 
@@ -121,10 +141,21 @@ function BlackHole() {
         <sphereGeometry args={[HORIZON, 48, 48]} />
         <meshBasicMaterial color="#000000" />
       </mesh>
-      {/* Anillo de fotones brillante alrededor del horizonte */}
+      {/* Anillo de fotones doble alrededor del horizonte */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[HORIZON * 1.16, 0.035, 16, 128]} />
         <meshBasicMaterial color="#fff0d6" toneMapped={false} />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[HORIZON * 1.26, 0.05, 16, 128]} />
+        <meshBasicMaterial
+          color="#ffc880"
+          transparent
+          opacity={0.4}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
       </mesh>
       {/* Arcos "lente": parte del disco curvada por encima/por debajo */}
       {[0, Math.PI].map((rot) => (
@@ -149,6 +180,7 @@ function BlackHole() {
 export default function BlackHoleScene() {
   const quality = useApp((s) => s.quality);
   const openDeepSpace = useApp((s) => s.openDeepSpace);
+  const controlsRef = useRef<{ enabled: boolean } | null>(null);
 
   return (
     <div className="scene-canvas">
@@ -158,7 +190,16 @@ export default function BlackHoleScene() {
         <Stars radius={120} depth={60} count={scaleCount(3000, quality, 800)} factor={4} saturation={0.3} fade speed={0.4} />
         <ambientLight intensity={0.2} />
         <BlackHole />
-        <OrbitControls enablePan={false} minDistance={5} maxDistance={22} autoRotate autoRotateSpeed={0.35} maxPolarAngle={Math.PI * 0.92} />
+        <OrbitControls
+          ref={controlsRef as never}
+          enablePan={false}
+          minDistance={5}
+          maxDistance={30}
+          autoRotate
+          autoRotateSpeed={0.35}
+          maxPolarAngle={Math.PI * 0.92}
+        />
+        <IntroFly from={[0, 12, 30]} to={[0, 3.5, 10]} duration={2.8} controls={controlsRef} />
         <AdaptiveQuality />
         <BlackHoleEffects />
       </Canvas>

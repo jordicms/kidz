@@ -326,9 +326,10 @@ export function createGlowTexture(key: string, inner: string, outer = 'rgba(0,0,
 }
 
 /**
- * Disco de acreción: degradado horizontal (interior caliente → exterior frío)
- * pensado para mapearse de forma radial en un anillo (UV remapeada). Brilla
- * mucho a propósito para que el bloom lo capte.
+ * Disco de acreción: degradado radial (interior caliente → exterior frío) con
+ * vetas de plasma a lo largo del ángulo, para que al girar se VEA el remolino.
+ * (u = radio, v = ángulo en el anillo con UV remapeada). Brilla en HDR a
+ * propósito para que el bloom lo capte.
  */
 export function createAccretionTexture(): THREE.Texture {
   const cacheKey = 'accretion-disk';
@@ -336,8 +337,9 @@ export function createAccretionTexture(): THREE.Texture {
   if (cached) return cached;
 
   const w = 512;
-  const h = 8;
+  const h = 256;
   const { canvas, ctx } = makeCanvas(w, h);
+  const rand = mulberry32(hashString('accretion'));
   const grad = ctx.createLinearGradient(0, 0, w, 0);
   grad.addColorStop(0.0, 'rgba(255,255,255,0)');
   grad.addColorStop(0.06, 'rgba(225,240,255,1)');
@@ -348,8 +350,94 @@ export function createAccretionTexture(): THREE.Texture {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
 
+  // Vetas de plasma orbitando: finas en radio (x), alargadas en ángulo (y).
+  // Se dibujan también desplazadas ±h para que la textura no tenga costura.
+  for (let i = 0; i < 150; i++) {
+    const x = w * 0.05 + rand() * w * 0.9;
+    const y = rand() * h;
+    const len = h * (0.08 + rand() * 0.4);
+    const width = 1 + rand() * 2.5;
+    const bright = rand() > 0.45;
+    ctx.fillStyle = bright
+      ? `rgba(255,240,215,${(0.06 + rand() * 0.13).toFixed(3)})`
+      : `rgba(25,6,0,${(0.06 + rand() * 0.12).toFixed(3)})`;
+    if (bright) ctx.globalCompositeOperation = 'lighter';
+    for (const dy of [-h, 0, h]) ctx.fillRect(x - width / 2, y + dy, width, len);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapT = THREE.RepeatWrapping;
+  cache.set(cacheKey, texture);
+  return texture;
+}
+
+/**
+ * Halo de galaxia espiral dibujado en canvas: bulbo central cálido, brazos
+ * luminosos (mismo trazado espiral que generateGalaxy: ángulo = rama + r·0.385),
+ * regiones rosadas de formación estelar y vetas oscuras de polvo. Aplicado en
+ * un plano bajo las estrellas-partícula, da el aspecto volumétrico de las fotos.
+ */
+export function createSpiralHazeTexture(
+  key: string,
+  opts: { branches?: number; inside?: string; outside?: string; accent?: string; radius?: number } = {},
+): THREE.Texture {
+  const cacheKey = `spiral:${key}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  const { branches = 4, inside = '#ffd9a0', outside = '#7186e8', accent = '#ff6ec7', radius = 20 } = opts;
+  const size = 1024;
+  const { canvas, ctx } = makeCanvas(size, size);
+  const rand = mulberry32(hashString(cacheKey));
+  const c = size / 2;
+  const k = (size / 2) * 0.96 / radius; // unidades de mundo → píxeles
+
+  const blob = (x: number, y: number, r: number, color: string, alpha: number) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const col = new THREE.Color(color);
+    g.addColorStop(0, `rgba(${(col.r * 255) | 0},${(col.g * 255) | 0},${(col.b * 255) | 0},${alpha.toFixed(3)})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  // Bulbo central
+  blob(c, c, radius * 0.3 * k, inside, 0.5);
+  blob(c, c, radius * 0.14 * k, '#fff3da', 0.65);
+
+  const STEPS = 130;
+  for (let b = 0; b < branches; b++) {
+    const branchAngle = (b / branches) * Math.PI * 2;
+    for (let s = 0; s < STEPS; s++) {
+      const t = s / STEPS;
+      const r = t * radius;
+      const ang = branchAngle + r * 0.385;
+      const jx = (rand() - 0.5) * 14;
+      const jy = (rand() - 0.5) * 14;
+      const px = c + Math.cos(ang) * r * k + jx;
+      const py = c + Math.sin(ang) * r * k + jy;
+      // Brazo luminoso (más ancho y cálido dentro, azulado fuera)
+      const width = (30 - 20 * t) * (0.8 + rand() * 0.5);
+      blob(px, py, width, lerpColor(inside, outside, t), 0.085 * (1 - t * 0.5));
+      // Regiones rosadas de formación estelar, salpicadas por los brazos
+      if (t > 0.22 && s % 9 === Math.floor(rand() * 9)) {
+        blob(px, py, 7 + rand() * 11, accent, 0.16);
+      }
+      // Veta de polvo oscuro en el borde interior del brazo
+      if (t > 0.15) {
+        const angD = ang - 0.2;
+        const dx = c + Math.cos(angD) * r * k + (rand() - 0.5) * 8;
+        const dy = c + Math.sin(angD) * r * k + (rand() - 0.5) * 8;
+        blob(dx, dy, 12 - 6 * t, '#000000', 0.09);
+      }
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
   cache.set(cacheKey, texture);
   return texture;
 }

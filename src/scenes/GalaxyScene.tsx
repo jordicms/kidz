@@ -4,9 +4,9 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Stars } from '@react-three/drei';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
-import { createGlowTexture } from '../utils/textures';
+import { createGlowTexture, createSpiralHazeTexture } from '../utils/textures';
 import Effects from '../components/three/Effects';
-import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
+import { AdaptiveQuality, IntroFly, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 /** Genera las estrellas de una galaxia espiral. */
 export function generateGalaxy(
@@ -54,29 +54,53 @@ export function GalaxyPoints({
   outside?: string;
   size?: number;
 }) {
-  const { positions, colors } = useMemo(
-    () => generateGalaxy(count, radius, branches, inside, outside),
+  // Dos poblaciones: estrellas de fondo + gigantes brillantes azul-blancas.
+  const main = useMemo(
+    () => generateGalaxy(Math.floor(count * 0.85), radius, branches, inside, outside),
     [count, radius, branches, inside, outside],
+  );
+  const bright = useMemo(
+    () => generateGalaxy(Math.max(1, Math.floor(count * 0.15)), radius, branches, '#ffffff', '#bcd9ff'),
+    [count, radius, branches],
   );
   const starTex = useMemo(() => createGlowTexture('star-point', 'rgba(255,255,255,1)'), []);
   return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={size}
-        map={starTex}
-        sizeAttenuation
-        vertexColors
-        transparent
-        opacity={0.9}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        toneMapped={false}
-      />
-    </points>
+    <>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[main.positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[main.colors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={size}
+          map={starTex}
+          sizeAttenuation
+          vertexColors
+          transparent
+          opacity={0.9}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </points>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[bright.positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[bright.colors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={size * 2.2}
+          map={starTex}
+          sizeAttenuation
+          vertexColors
+          transparent
+          opacity={0.95}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </points>
+    </>
   );
 }
 
@@ -158,17 +182,28 @@ function SunMarker() {
 
 function RotatingGalaxy({ count }: { count: number }) {
   const ref = useRef<THREE.Group>(null);
-  const haze = useMemo(() => createGlowTexture('galaxy-haze', 'rgba(150,170,255,0.5)'), []);
+  // Halo espiral dibujado con el MISMO trazado que las estrellas: brazos
+  // luminosos, regiones rosadas y vetas de polvo. Da el volumen de las fotos.
+  const haze = useMemo(
+    () => createSpiralHazeTexture('milky-haze', { branches: 4, inside: '#ffd9a0', outside: '#7186e8', accent: '#ff6ec7', radius: 20 }),
+    [],
+  );
   const core = useMemo(() => createGlowTexture('galaxy-core', 'rgba(255,225,170,0.95)'), []);
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += 0.015 * delta;
   });
   return (
     <group ref={ref}>
-      {/* Polvo/halo en el plano de la galaxia */}
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[22, 48]} />
-        <meshBasicMaterial map={haze} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        <circleGeometry args={[20, 64]} />
+        <meshBasicMaterial
+          map={haze}
+          transparent
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
       </mesh>
       {/* Bulbo central brillante */}
       <sprite scale={[6, 6, 1]}>
@@ -181,6 +216,7 @@ function RotatingGalaxy({ count }: { count: number }) {
 
 export default function GalaxyScene() {
   const quality = useApp((s) => s.quality);
+  const controlsRef = useRef<{ enabled: boolean } | null>(null);
   return (
     <div className="scene-canvas">
       <Canvas
@@ -195,7 +231,8 @@ export default function GalaxyScene() {
         <BlackHole />
         <SunMarker />
         <ShootingStars count={2} radius={90} />
-        <OrbitControls enablePan={false} minDistance={6} maxDistance={70} />
+        <OrbitControls ref={controlsRef as never} enablePan={false} minDistance={6} maxDistance={70} />
+        <IntroFly from={[0, 46, 78]} to={[0, 16, 26]} duration={2.6} controls={controlsRef} />
         <AdaptiveQuality />
         <Effects />
       </Canvas>
