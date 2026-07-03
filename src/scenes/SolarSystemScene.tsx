@@ -1,17 +1,22 @@
-import { useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls, Stars } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ToneMapping, GodRays } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import { SUN, PLANETS, DWARF_PLANETS, ASTEROID_BELT } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
 import { createMoonTexture } from '../utils/textures';
-import Effects from '../components/three/Effects';
 import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 const _hoverTarget = new THREE.Vector3();
+
+/** Petición de vuelo de cámara hacia un astro (al tocarlo). */
+type FlyRequest = { id: string; pos: THREE.Vector3; size: number } | null;
+type SelectFn = (body: Body, pos: THREE.Vector3) => void;
 
 type SceneConf = Body['scene'];
 
@@ -47,15 +52,14 @@ function useHoverScale(ref: RefObject<THREE.Group | null>, hovered: RefObject<bo
   });
 }
 
-function BodyLabel({ body, offsetY }: { body: Body; offsetY: number }) {
-  const openBody = useApp((s) => s.openBody);
+function BodyLabel({ body, offsetY, onTap }: { body: Body; offsetY: number; onTap: () => void }) {
   return (
     <Html center position={[0, offsetY, 0]} zIndexRange={[5, 0]}>
       <div
         className="body-label"
         onClick={(e) => {
           e.stopPropagation();
-          openBody(body.id);
+          onTap();
         }}
       >
         <span className="chip">
@@ -89,14 +93,18 @@ function OrbitingMoon({ moon, speedScale }: { moon: Moon; speedScale: number }) 
   );
 }
 
-function OrbitingBody({ body }: { body: Body }) {
+function OrbitingBody({ body, onSelect }: { body: Body; onSelect: SelectFn }) {
   const orbitRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
   const scaleRef = useRef<THREE.Group>(null);
   const hovered = useRef(false);
   const angle = useRef(body.scene.phase ?? 0);
   const speed = useApp((s) => s.speed);
-  const openBody = useApp((s) => s.openBody);
+  const select = () => {
+    const pos = new THREE.Vector3();
+    orbitRef.current?.getWorldPosition(pos);
+    onSelect(body, pos);
+  };
 
   useFrame((_, delta) => {
     // Velocidad variable (2.ª ley de Kepler): más rápido cerca del Sol.
@@ -115,7 +123,7 @@ function OrbitingBody({ body }: { body: Body }) {
         ref={scaleRef}
         onClick={(e) => {
           e.stopPropagation();
-          openBody(body.id);
+          select();
         }}
         onPointerOver={() => {
           hovered.current = true;
@@ -133,7 +141,7 @@ function OrbitingBody({ body }: { body: Body }) {
       {body.moons.map((m) => (
         <OrbitingMoon key={m.id} moon={m} speedScale={0.6} />
       ))}
-      <BodyLabel body={body} offsetY={(body.scene.rings?.outer ?? body.scene.size) + 0.9} />
+      <BodyLabel body={body} offsetY={(body.scene.rings?.outer ?? body.scene.size) + 0.9} onTap={select} />
     </group>
   );
 }
@@ -189,23 +197,35 @@ function AsteroidBelt({ count }: { count: number }) {
   );
 }
 
-function Sun() {
+function Sun({ onSelect, onSunMesh }: { onSelect: SelectFn; onSunMesh: (m: THREE.Mesh | null) => void }) {
   const spinRef = useRef<THREE.Group>(null);
   const scaleRef = useRef<THREE.Group>(null);
   const hovered = useRef(false);
   const speed = useApp((s) => s.speed);
-  const openBody = useApp((s) => s.openBody);
+  const select = () => onSelect(SUN, new THREE.Vector3(0, 0, 0));
   useFrame((_, delta) => {
     if (spinRef.current) spinRef.current.rotation.y += SUN.scene.rotationSpeed * speed * delta;
   });
   useHoverScale(scaleRef, hovered);
   return (
     <group>
+      {/* Fuente de los god rays: disco brillante aditivo apenas mayor que el Sol */}
+      <mesh ref={onSunMesh}>
+        <sphereGeometry args={[SUN.scene.size * 1.04, 32, 32]} />
+        <meshBasicMaterial
+          color="#ffd9a0"
+          transparent
+          opacity={0.5}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
       <group
         ref={scaleRef}
         onClick={(e) => {
           e.stopPropagation();
-          openBody(SUN.id);
+          select();
         }}
         onPointerOver={() => {
           hovered.current = true;
@@ -220,15 +240,126 @@ function Sun() {
           <CelestialBody body={SUN} />
         </group>
       </group>
-      <BodyLabel body={SUN} offsetY={SUN.scene.size + 1.2} />
+      <BodyLabel body={SUN} offsetY={SUN.scene.size + 1.2} onTap={select} />
       <pointLight intensity={2.4} decay={0} color="#fff2d5" />
     </group>
+  );
+}
+
+/**
+ * Director de cámara: vuelo de entrada al montar la escena y acercamiento
+ * cinematográfico al astro que tocas antes de abrir su ficha.
+ */
+function CameraDirector({
+  fly,
+  controls,
+  onArrived,
+}: {
+  fly: FlyRequest;
+  controls: RefObject<{ enabled: boolean } | null>;
+  onArrived: (id: string) => void;
+}) {
+  const camera = useThree((s) => s.camera);
+  const anim = useRef<{
+    mode: 'intro' | 'fly';
+    t: number;
+    dur: number;
+    from: THREE.Vector3;
+    to: THREE.Vector3;
+    look: THREE.Vector3;
+    id?: string;
+  } | null>(null);
+
+  // Vuelo de entrada: desde lejos hasta la posición habitual.
+  useEffect(() => {
+    camera.position.set(0, 72, 150);
+    anim.current = {
+      mode: 'intro',
+      t: 0,
+      dur: 2.4,
+      from: camera.position.clone(),
+      to: new THREE.Vector3(0, 32, 54),
+      look: new THREE.Vector3(0, 0, 0),
+    };
+  }, [camera]);
+
+  // Acercamiento al astro seleccionado.
+  useEffect(() => {
+    if (!fly) return;
+    const dir = camera.position.clone().sub(fly.pos).normalize();
+    const to = fly.pos.clone().addScaledVector(dir, Math.max(fly.size * 4.5, 4));
+    to.y += fly.size * 1.1;
+    anim.current = {
+      mode: 'fly',
+      t: 0,
+      dur: 0.85,
+      from: camera.position.clone(),
+      to,
+      look: fly.pos.clone(),
+      id: fly.id,
+    };
+  }, [fly, camera]);
+
+  useFrame((_, delta) => {
+    const a = anim.current;
+    if (!a) return;
+    if (controls.current) controls.current.enabled = false;
+    a.t = Math.min(1, a.t + delta / a.dur);
+    const e = a.mode === 'intro' ? 1 - Math.pow(1 - a.t, 3) : a.t * a.t * (3 - 2 * a.t);
+    camera.position.lerpVectors(a.from, a.to, e);
+    camera.lookAt(a.look);
+    if (a.t >= 1) {
+      anim.current = null;
+      if (controls.current) controls.current.enabled = true;
+      if (a.mode === 'fly' && a.id) onArrived(a.id);
+    }
+  });
+  return null;
+}
+
+/** Postprocesado del sistema solar: god rays desde el Sol + bloom + ACES. */
+function SolarEffects({ sun }: { sun: THREE.Mesh | null }) {
+  const quality = useApp((s) => s.quality);
+  if (!quality.postprocessing) return null;
+
+  if (sun) {
+    return (
+      <EffectComposer multisampling={quality.antialias ? 4 : 0}>
+        <GodRays
+          sun={sun}
+          samples={quality.tier === 'high' ? 60 : 32}
+          density={0.97}
+          decay={0.93}
+          weight={0.35}
+          exposure={0.45}
+          clampMax={1}
+          blur
+        />
+        <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.55} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
+        <Vignette eskil={false} offset={0.28} darkness={0.7} />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      </EffectComposer>
+    );
+  }
+  return (
+    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
+      <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.55} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
+      <Vignette eskil={false} offset={0.28} darkness={0.7} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    </EffectComposer>
   );
 }
 
 export default function SolarSystemScene() {
   const bodies = [...PLANETS, ...DWARF_PLANETS];
   const quality = useApp((s) => s.quality);
+  const openBody = useApp((s) => s.openBody);
+  const [fly, setFly] = useState<FlyRequest>(null);
+  const [sunMesh, setSunMesh] = useState<THREE.Mesh | null>(null);
+  const controlsRef = useRef<{ enabled: boolean } | null>(null);
+
+  const onSelect: SelectFn = (body, pos) => setFly({ id: body.id, pos, size: body.scene.size });
+
   return (
     <div className="scene-canvas">
       <Canvas
@@ -248,23 +379,25 @@ export default function SolarSystemScene() {
           fade
           speed={0.6}
         />
-        <Sun />
+        <Sun onSelect={onSelect} onSunMesh={setSunMesh} />
         {bodies.map((b) => (
           <OrbitLine key={`orbit-${b.id}`} scene={b.scene} />
         ))}
         {bodies.map((b) => (
-          <OrbitingBody key={b.id} body={b} />
+          <OrbitingBody key={b.id} body={b} onSelect={onSelect} />
         ))}
         <AsteroidBelt count={scaleCount(ASTEROID_BELT.count, quality, 200)} />
         <ShootingStars count={2} radius={140} />
         <OrbitControls
+          ref={controlsRef as never}
           enablePan={false}
           minDistance={8}
-          maxDistance={120}
+          maxDistance={160}
           maxPolarAngle={Math.PI * 0.85}
         />
+        <CameraDirector fly={fly} controls={controlsRef} onArrived={openBody} />
         <AdaptiveQuality />
-        <Effects />
+        <SolarEffects sun={quality.tier !== 'low' ? sunMesh : null} />
       </Canvas>
     </div>
   );
