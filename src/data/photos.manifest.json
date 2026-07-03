@@ -35,6 +35,13 @@
     { "key": "pulmones", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Lungs diagram simple.svg?width=800", "credit": "🎨 Diagrama de pulmones: Patrick J. Lynch · CC BY 2.5", "license": "CC-BY-2.5" },
     { "key": "cerebro", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human brain.png?width=800", "credit": "🎨 Cerebro humano · Wikimedia Commons", "license": "verify" },
     { "key": "estomago", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stomach diagram.svg?width=700", "credit": "🎨 Diagrama del estómago · Wikimedia Commons", "license": "verify" },
-    { "key": "huesos", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human skeleton front en.svg?width=600", "credit": "🎨 Esqueleto humano · Wikimedia Commons · CC BY-SA", "license": "CC-BY-SA" }
+    { "key": "huesos", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human skeleton front en.svg?width=600", "credit": "🎨 Esqueleto humano · Wikimedia Commons · CC BY-SA", "license": "CC-BY-SA" },
+
+    { "key": "ballena", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback Whale underwater shot.jpg?width=900", "credit": "📷 Ballena jorobada · Wikimedia Commons", "license": "verify" },
+    { "key": "tortuga", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Green Sea Turtle grazing seagrass.jpg?width=900", "credit": "📷 Tortuga verde · Wikimedia Commons", "license": "verify" },
+    { "key": "tiburon", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/White shark.jpg?width=900", "credit": "📷 Tiburón blanco · Wikimedia Commons", "license": "verify" },
+    { "key": "medusa", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Aurelia aurita 2.jpg?width=900", "credit": "📷 Medusa común · Wikimedia Commons", "license": "verify" },
+    { "key": "pulpo", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Octopus2.jpg?width=900", "credit": "📷 Pulpo · Wikimedia Commons", "license": "verify" },
+    { "key": "rape", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback anglerfish.png?width=900", "credit": "🎨 Rape abisal · Wikimedia Commons", "license": "verify" }
   ]
 }
