@@ -7,6 +7,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
 import { createGlowTexture } from '../utils/textures';
+import { usePBR } from '../utils/pbr';
 import DinoModel from '../components/three/DinoModel';
 import { AdaptiveQuality, IntroFly } from '../components/three/SceneExtras';
 import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
@@ -57,17 +58,22 @@ function terrainHeight(x: number, z: number): number {
   return falloff * (0.5 + hills * 2.4) - 1.15;
 }
 
-/** Malla del terreno con colores por altura: arena → hierba → roca. */
+/** Malla del terreno con colores por altura: arena → hierba → roca.
+ *  Con texturas PBR descargadas (npm run pbr), la hierba real se tiñe por
+ *  zonas (el color de vértice multiplica al mapa). */
 function Terrain() {
+  const pbr = usePBR('grass', 26);
+  const textured = !!pbr;
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(54, 54, 100, 100);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
     const colors = new Float32Array(pos.count * 3);
-    const sand = new THREE.Color('#e2cf96');
-    const grassA = new THREE.Color('#569a4c');
-    const grassB = new THREE.Color('#477f3e');
-    const rock = new THREE.Color('#8b8072');
+    // Con textura, los colores pasan a ser TINTES sobre la foto de hierba.
+    const sand = new THREE.Color(textured ? '#f2e3bd' : '#e2cf96');
+    const grassA = new THREE.Color(textured ? '#ffffff' : '#569a4c');
+    const grassB = new THREE.Color(textured ? '#d8e0cc' : '#477f3e');
+    const rock = new THREE.Color(textured ? '#c9c2b4' : '#8b8072');
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
@@ -86,10 +92,16 @@ function Terrain() {
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, []);
+  }, [textured]);
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial vertexColors roughness={1} />
+      <meshStandardMaterial
+        vertexColors
+        roughness={1}
+        map={pbr?.map}
+        normalMap={pbr?.normalMap}
+        roughnessMap={pbr?.roughnessMap}
+      />
     </mesh>
   );
 }
@@ -339,12 +351,19 @@ function Sway({ children, phase = 0, amp = 0.022 }: { children: ReactNode; phase
 
 /** Árbol frondoso: tronco + copa de bolas irregulares, mecido por el viento. */
 function Tree({ position, scale, phase = 0 }: { position: [number, number, number]; scale: number; phase?: number }) {
+  const bark = usePBR('bark', 1);
   return (
     <group position={position} scale={scale}>
       <Sway phase={phase}>
         <mesh position={[0, 0.55, 0]} castShadow>
-          <cylinderGeometry args={[0.12, 0.18, 1.1, 6]} />
-          <meshStandardMaterial color="#7a5230" flatShading roughness={1} />
+          <cylinderGeometry args={[0.12, 0.18, 1.1, 8]} />
+          <meshStandardMaterial
+            color={bark ? '#ffffff' : '#7a5230'}
+            flatShading={!bark}
+            roughness={1}
+            map={bark?.map}
+            normalMap={bark?.normalMap}
+          />
         </mesh>
         <mesh position={[0, 1.55, 0]} castShadow>
           <icosahedronGeometry args={[0.75, 1]} />
@@ -369,16 +388,24 @@ function Tree({ position, scale, phase = 0 }: { position: [number, number, numbe
 
 /** Palmera low-poly con tronco curvado y hojas en abanico, mecida. */
 function Palm({ position, rotation = 0, scale = 1 }: { position: [number, number, number]; rotation?: number; scale?: number }) {
+  const bark = usePBR('bark', 1);
+  const trunkProps = {
+    color: bark ? '#e8d8c0' : '#8a6a42',
+    flatShading: !bark,
+    roughness: 1,
+    map: bark?.map,
+    normalMap: bark?.normalMap,
+  } as const;
   return (
     <group position={position} rotation={[0, rotation, 0]} scale={scale}>
       <Sway phase={rotation * 3} amp={0.03}>
         <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0.12]} castShadow>
-          <cylinderGeometry args={[0.09, 0.13, 1, 6]} />
-          <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+          <cylinderGeometry args={[0.09, 0.13, 1, 8]} />
+          <meshStandardMaterial {...trunkProps} />
         </mesh>
         <mesh position={[0.16, 1.3, 0]} rotation={[0, 0, 0.24]} castShadow>
-          <cylinderGeometry args={[0.07, 0.09, 1, 6]} />
-          <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+          <cylinderGeometry args={[0.07, 0.09, 1, 8]} />
+          <meshStandardMaterial {...trunkProps} />
         </mesh>
         {Array.from({ length: 6 }).map((_, i) => (
           <group key={i} position={[0.32, 1.85, 0]} rotation={[0, (i / 6) * Math.PI * 2, 0]}>
@@ -435,6 +462,7 @@ function GrassTufts({ count }: { count: number }) {
 
 /** Rocas repartidas por la isla. */
 function Rocks({ count }: { count: number }) {
+  const pbr = usePBR('rock', 1.4);
   const matrices = useMemo(() => {
     const list: THREE.Matrix4[] = [];
     const dummy = new THREE.Object3D();
@@ -464,8 +492,15 @@ function Rocks({ count }: { count: number }) {
         mesh.instanceMatrix.needsUpdate = true;
       }}
     >
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color="#8b8072" flatShading roughness={1} />
+      <dodecahedronGeometry args={[1, 1]} />
+      <meshStandardMaterial
+        color={pbr ? '#e8e2d6' : '#8b8072'}
+        flatShading={!pbr}
+        roughness={1}
+        map={pbr?.map}
+        normalMap={pbr?.normalMap}
+        roughnessMap={pbr?.roughnessMap}
+      />
     </instancedMesh>
   );
 }

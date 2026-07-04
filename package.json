@@ -11,7 +11,8 @@
     "photos": "node scripts/fetch-photos.mjs",
     "models": "node scripts/fetch-models.mjs",
     "textures": "node scripts/fetch-textures.mjs",
-    "cap:sync": "npm run build && cap sync"
+    "cap:sync": "npm run build && cap sync",
+    "pbr": "node scripts/fetch-pbr.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.0.0",
