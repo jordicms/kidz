@@ -1,0 +1,8 @@
+{
+  "_comment": "Sets de texturas PBR (Poly Haven, CC0) para materiales realistas. Ejecuta `npm run pbr` para descargarlas a src/assets/pbr/<key>-{diff,nor,rough}.jpg. Cada set es un 'slug' de polyhaven.com (URL directa del CDN, 1k jpg). Si alguno falla, el script lo lista: corrige el slug y reejecuta. La app funciona igual sin ellas (materiales de color plano).",
+  "sets": [
+    { "key": "grass", "slug": "aerial_grass_rock", "credit": "Poly Haven · CC0", "uso": "terreno de la isla" },
+    { "key": "rock", "slug": "rock_face", "credit": "Poly Haven · CC0", "uso": "rocas de la isla" },
+    { "key": "bark", "slug": "bark_willow", "credit": "Poly Haven · CC0", "uso": "troncos de árboles y palmeras" }
+  ]
+}

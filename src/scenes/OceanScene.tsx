@@ -9,6 +9,7 @@ import { createGlowTexture } from '../utils/textures';
 import SeaCreatureModel from '../components/three/SeaCreatureModel';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
+import { wantsWebGPU, webGPURenderer } from '../utils/renderer';
 
 const DEPTH_MAX = 140;
 /** Metros → unidades de escena (hacia abajo). */
@@ -159,11 +160,17 @@ export default function OceanScene() {
   const [depth, setDepth] = useState(5);
   const sunRef = useRef<THREE.DirectionalLight | null>(null);
   const zone = depth < 50 ? ZONES[0] : depth < 100 ? ZONES[1] : ZONES[2];
+  // Experimental: ?gpu=1 activa WebGPU en esta escena (sin postprocesado aún).
+  const useGPU = useMemo(() => wantsWebGPU(), []);
 
   return (
     <>
       <div className="scene-canvas" style={{ pointerEvents: 'auto' }}>
-        <Canvas camera={{ position: [0, 1.2, 13], fov: 55 }} dpr={quality.dpr} gl={{ antialias: quality.antialias }}>
+        <Canvas
+          camera={{ position: [0, 1.2, 13], fov: 55 }}
+          dpr={quality.dpr}
+          gl={useGPU ? (webGPURenderer as never) : { antialias: quality.antialias }}
+        >
           <hemisphereLight args={['#bfe3ff', '#0a2a4a', 0.5]} />
           <directionalLight ref={sunRef} position={[6, 10, 4]} intensity={1.8} color="#dff2ff" />
           <ambientLight intensity={0.25} />
@@ -184,7 +191,7 @@ export default function OceanScene() {
             <meshStandardMaterial color="#1a2436" flatShading roughness={1} />
           </mesh>
           <AdaptiveQuality />
-          <Effects />
+          {!useGPU && <Effects />}
         </Canvas>
       </div>
 
