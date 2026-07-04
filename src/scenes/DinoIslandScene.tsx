@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Sky } from '@react-three/drei';
@@ -12,27 +12,92 @@ import { AdaptiveQuality, IntroFly } from '../components/three/SceneExtras';
 import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 
-/** Un árbol low-poly (copa cónica + tronco). */
-function Tree({ position, scale }: { position: [number, number, number]; scale: number }) {
+/* ------------------------------------------------------------------ */
+/* Terreno: colinas reales con ruido determinista                      */
+/* ------------------------------------------------------------------ */
+
+const WATER_Y = -1.0;
+
+function hash2(ix: number, iz: number): number {
+  const s = Math.sin(ix * 127.1 + iz * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function valueNoise(x: number, z: number): number {
+  const ix = Math.floor(x);
+  const iz = Math.floor(z);
+  const fx = x - ix;
+  const fz = z - iz;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sz = fz * fz * (3 - 2 * fz);
+  const a = hash2(ix, iz);
+  const b = hash2(ix + 1, iz);
+  const c = hash2(ix, iz + 1);
+  const d = hash2(ix + 1, iz + 1);
+  return a + (b - a) * sx + (c - a) * sz + (a - b - c + d) * sx * sz;
+}
+
+function fbm2(x: number, z: number): number {
+  let v = 0;
+  let amp = 0.5;
+  let f = 1;
+  for (let i = 0; i < 4; i++) {
+    v += amp * valueNoise(x * f, z * f);
+    f *= 2.1;
+    amp *= 0.5;
+  }
+  return v;
+}
+
+/** Altura del terreno en un punto (islote con colinas y costa que se hunde). */
+function terrainHeight(x: number, z: number): number {
+  const d = Math.hypot(x, z);
+  const falloff = Math.max(0, 1 - Math.pow(d / 24, 2.4));
+  const hills = fbm2(x * 0.11 + 7.3, z * 0.11 + 3.7);
+  return falloff * (0.5 + hills * 2.4) - 1.15;
+}
+
+/** Malla del terreno con colores por altura: arena → hierba → roca. */
+function Terrain() {
+  const geo = useMemo(() => {
+    const g = new THREE.PlaneGeometry(54, 54, 100, 100);
+    g.rotateX(-Math.PI / 2);
+    const pos = g.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const sand = new THREE.Color('#e2cf96');
+    const grassA = new THREE.Color('#569a4c');
+    const grassB = new THREE.Color('#477f3e');
+    const rock = new THREE.Color('#8b8072');
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const h = terrainHeight(x, z);
+      pos.setY(i, h);
+      const varG = fbm2(x * 0.45 + 21, z * 0.45 + 9);
+      c.copy(grassA).lerp(grassB, varG);
+      if (h < -0.35) c.copy(sand);
+      else if (h < 0.05) c.lerpColors(sand, c, (h + 0.35) / 0.4);
+      if (h > 1.1) c.lerp(rock, Math.min(1, (h - 1.1) / 0.7));
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    g.computeVertexNormals();
+    return g;
+  }, []);
   return (
-    <group position={position} scale={scale}>
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.12, 0.16, 1, 6]} />
-        <meshStandardMaterial color="#7a5230" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0, 1.4, 0]} castShadow>
-        <coneGeometry args={[0.7, 1.6, 7]} />
-        <meshStandardMaterial color="#3f7d3a" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0, 2.1, 0]} castShadow>
-        <coneGeometry args={[0.5, 1.1, 7]} />
-        <meshStandardMaterial color="#4a9046" flatShading roughness={1} />
-      </mesh>
-    </group>
+    <mesh geometry={geo} receiveShadow>
+      <meshStandardMaterial vertexColors roughness={1} />
+    </mesh>
   );
 }
 
-/** Registro compartido de posiciones para que el depredador "vea" a las presas. */
+/* ------------------------------------------------------------------ */
+/* Comportamiento de los dinosaurios (igual que antes)                 */
+/* ------------------------------------------------------------------ */
+
 type Registry = Map<string, { pos: THREE.Vector3; diet: Dino['diet'] }>;
 
 const WALK_R = 15; // radio caminable de la isla
@@ -87,14 +152,21 @@ function nearestThreat(reg: Registry, pos: THREE.Vector3, radius: number): THREE
 }
 
 /** Parte visual común: el modelo (interactivo) y la etiqueta con su era. */
-function DinoVisual({ dino, moving }: { dino: Dino; moving: boolean }) {
+function DinoVisual({ dino, moving, shadow = true }: { dino: Dino; moving: boolean; shadow?: boolean }) {
   const openDino = useApp((s) => s.openDino);
+  const blob = useMemo(() => createGlowTexture('blob-shadow', 'rgba(0,0,0,0.8)'), []);
   const tap = () => {
     playRoar(roarPitchFor(dino.heightM));
     openDino(dino.id);
   };
   return (
     <>
+      {shadow && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+          <circleGeometry args={[Math.min(2.2, dino.heightM * dino.scene.scale * 0.9 + 0.4), 20]} />
+          <meshBasicMaterial map={blob} transparent opacity={0.38} depthWrite={false} />
+        </mesh>
+      )}
       <group
         scale={dino.scene.scale}
         onClick={(e) => {
@@ -141,13 +213,14 @@ function FlyingDino({ dino }: { dino: Dino }) {
 
   return (
     <group ref={group}>
-      <DinoVisual dino={dino} moving={speed > 0} />
+      <DinoVisual dino={dino} moving={speed > 0} shadow={false} />
     </group>
   );
 }
 
 /** Terrestre con comportamiento: los herbívoros deambulan y pastan; si un
- *  carnívoro se acerca, huyen. El carnívoro acecha a la presa más cercana. */
+ *  carnívoro se acerca, huyen. El carnívoro acecha a la presa más cercana.
+ *  La altura sigue las colinas del terreno. */
 function GroundDino({ dino, registry }: { dino: Dino; registry: Registry }) {
   const group = useRef<THREE.Group>(null);
   const speed = useApp((s) => s.speed);
@@ -231,7 +304,7 @@ function GroundDino({ dino, registry }: { dino: Dino; registry: Registry }) {
       }
     }
 
-    g.position.copy(s.pos);
+    g.position.set(s.pos.x, terrainHeight(s.pos.x, s.pos.z), s.pos.z);
     g.rotation.y = s.heading;
     g.rotation.x = s.tilt;
   });
@@ -247,18 +320,231 @@ function DinoActor({ dino, registry }: { dino: Dino; registry: Registry }) {
   return dino.fly ? <FlyingDino dino={dino} /> : <GroundDino dino={dino} registry={registry} />;
 }
 
-function Island() {
+/* ------------------------------------------------------------------ */
+/* Vegetación y decorado                                               */
+/* ------------------------------------------------------------------ */
+
+/** Vaivén suave del viento (pivote en la base). */
+function Sway({ children, phase = 0, amp = 0.022 }: { children: ReactNode; phase?: number; amp?: number }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (ref.current) {
+      ref.current.rotation.z = Math.sin(t * 1.3 + phase) * amp;
+      ref.current.rotation.x = Math.cos(t * 1.05 + phase * 1.7) * amp * 0.6;
+    }
+  });
+  return <group ref={ref}>{children}</group>;
+}
+
+/** Árbol frondoso: tronco + copa de bolas irregulares, mecido por el viento. */
+function Tree({ position, scale, phase = 0 }: { position: [number, number, number]; scale: number; phase?: number }) {
   return (
-    <group>
-      {/* Tierra de la isla */}
-      <mesh position={[0, -0.5, 0]} receiveShadow>
-        <cylinderGeometry args={[18, 20, 1, 48]} />
-        <meshStandardMaterial color="#5fa052" flatShading roughness={1} />
-      </mesh>
-      {/* Playa */}
-      <mesh position={[0, -0.55, 0]} receiveShadow>
-        <cylinderGeometry args={[20, 21, 0.9, 48]} />
-        <meshStandardMaterial color="#e6d59a" flatShading roughness={1} />
+    <group position={position} scale={scale}>
+      <Sway phase={phase}>
+        <mesh position={[0, 0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.12, 0.18, 1.1, 6]} />
+          <meshStandardMaterial color="#7a5230" flatShading roughness={1} />
+        </mesh>
+        <mesh position={[0, 1.55, 0]} castShadow>
+          <icosahedronGeometry args={[0.75, 1]} />
+          <meshStandardMaterial color="#4a8a44" flatShading roughness={1} />
+        </mesh>
+        <mesh position={[0.48, 1.3, 0.16]} castShadow>
+          <icosahedronGeometry args={[0.5, 1]} />
+          <meshStandardMaterial color="#569a4c" flatShading roughness={1} />
+        </mesh>
+        <mesh position={[-0.42, 1.38, -0.12]} castShadow>
+          <icosahedronGeometry args={[0.46, 1]} />
+          <meshStandardMaterial color="#63a854" flatShading roughness={1} />
+        </mesh>
+        <mesh position={[0, 2.1, 0]} castShadow>
+          <icosahedronGeometry args={[0.42, 1]} />
+          <meshStandardMaterial color="#569a4c" flatShading roughness={1} />
+        </mesh>
+      </Sway>
+    </group>
+  );
+}
+
+/** Palmera low-poly con tronco curvado y hojas en abanico, mecida. */
+function Palm({ position, rotation = 0, scale = 1 }: { position: [number, number, number]; rotation?: number; scale?: number }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
+      <Sway phase={rotation * 3} amp={0.03}>
+        <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0.12]} castShadow>
+          <cylinderGeometry args={[0.09, 0.13, 1, 6]} />
+          <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+        </mesh>
+        <mesh position={[0.16, 1.3, 0]} rotation={[0, 0, 0.24]} castShadow>
+          <cylinderGeometry args={[0.07, 0.09, 1, 6]} />
+          <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
+        </mesh>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <group key={i} position={[0.32, 1.85, 0]} rotation={[0, (i / 6) * Math.PI * 2, 0]}>
+            <mesh position={[0.55, 0.05, 0]} rotation={[0, 0, -1.95]} scale={[0.3, 1.15, 0.06]} castShadow>
+              <coneGeometry args={[0.5, 1, 4]} />
+              <meshStandardMaterial color="#3f9e4d" flatShading roughness={1} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
+        ))}
+      </Sway>
+    </group>
+  );
+}
+
+/** Matas de hierba instanciadas por toda la pradera. */
+function GrassTufts({ count }: { count: number }) {
+  const matrices = useMemo(() => {
+    const list: THREE.Matrix4[] = [];
+    const dummy = new THREE.Object3D();
+    let i = 0;
+    let tries = 0;
+    while (list.length < count && tries < count * 4) {
+      tries++;
+      const a = i * 2.399 + hash2(i, 3) * 0.7;
+      const r = 2 + hash2(i, 7) * 15;
+      i++;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const h = terrainHeight(x, z);
+      if (h < 0.0 || Math.hypot(x + 9, z + 9) < 5.5) continue;
+      dummy.position.set(x, h + 0.12, z);
+      dummy.rotation.set(0, hash2(i, 13) * Math.PI, 0);
+      dummy.scale.setScalar(0.7 + hash2(i, 17) * 0.9);
+      dummy.updateMatrix();
+      list.push(dummy.matrix.clone());
+    }
+    return list;
+  }, [count]);
+
+  return (
+    <instancedMesh
+      args={[undefined, undefined, matrices.length]}
+      ref={(mesh) => {
+        if (!mesh) return;
+        matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
+        mesh.instanceMatrix.needsUpdate = true;
+      }}
+    >
+      <coneGeometry args={[0.07, 0.32, 4]} />
+      <meshStandardMaterial color="#4d9448" flatShading roughness={1} />
+    </instancedMesh>
+  );
+}
+
+/** Rocas repartidas por la isla. */
+function Rocks({ count }: { count: number }) {
+  const matrices = useMemo(() => {
+    const list: THREE.Matrix4[] = [];
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count * 3 && list.length < count; i++) {
+      const a = i * 2.71 + hash2(i, 23);
+      const r = 3 + hash2(i, 29) * 15;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const h = terrainHeight(x, z);
+      if (h < -0.4 || Math.hypot(x + 9, z + 9) < 5) continue;
+      dummy.position.set(x, h + 0.06, z);
+      dummy.rotation.set(hash2(i, 31) * Math.PI, hash2(i, 37) * Math.PI, 0);
+      dummy.scale.setScalar(0.16 + hash2(i, 41) * 0.4);
+      dummy.updateMatrix();
+      list.push(dummy.matrix.clone());
+    }
+    return list;
+  }, [count]);
+
+  return (
+    <instancedMesh
+      castShadow
+      args={[undefined, undefined, matrices.length]}
+      ref={(mesh) => {
+        if (!mesh) return;
+        matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
+        mesh.instanceMatrix.needsUpdate = true;
+      }}
+    >
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial color="#8b8072" flatShading roughness={1} />
+    </instancedMesh>
+  );
+}
+
+/** Flores de colores salpicadas por la hierba. */
+function Flowers({ count }: { count: number }) {
+  const flowers = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => {
+        const a = (i * 2.399) % (Math.PI * 2);
+        const r = 3 + ((i * 53) % 130) / 10;
+        const x = Math.cos(a) * r;
+        const z = Math.sin(a) * r;
+        const h = terrainHeight(x, z);
+        return {
+          key: i,
+          pos: [x, Math.max(h, -0.2), z] as [number, number, number],
+          color: ['#ff6ec7', '#ffd166', '#ffffff', '#ff8c42'][i % 4],
+          s: 0.7 + ((i * 13) % 5) / 10,
+          onGrass: h > 0.0,
+        };
+      }).filter((f) => f.onGrass),
+    [count],
+  );
+  return (
+    <>
+      {flowers.map((f) => (
+        <group key={f.key} position={f.pos} scale={f.s}>
+          <mesh position={[0, 0.12, 0]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.24, 4]} />
+            <meshStandardMaterial color="#3f7d3a" flatShading />
+          </mesh>
+          <mesh position={[0, 0.28, 0]}>
+            <sphereGeometry args={[0.08, 6, 6]} />
+            <meshStandardMaterial color={f.color} flatShading />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
+/** Mariposa que revolotea por la isla batiendo las alas. */
+function Butterfly({ seed }: { seed: number }) {
+  const ref = useRef<THREE.Group>(null);
+  const wingL = useRef<THREE.Group>(null);
+  const wingR = useRef<THREE.Group>(null);
+  const color = ['#ff6ec7', '#ffd166', '#7fb3ff', '#b8f26e'][seed % 4];
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime * (0.22 + (seed % 3) * 0.06) + seed * 2.1;
+    const r = 4 + (seed % 5) * 2.4;
+    const g = ref.current;
+    if (g) {
+      const x = Math.cos(t) * r;
+      const z = Math.sin(t) * r;
+      g.position.set(x, terrainHeight(x, z) + 1.4 + Math.sin(t * 2.3 + seed) * 0.4, z);
+      g.rotation.y = -t + Math.PI / 2;
+    }
+    const flap = Math.sin(clock.elapsedTime * 13 + seed) * 0.85;
+    if (wingL.current) wingL.current.rotation.z = flap;
+    if (wingR.current) wingR.current.rotation.z = -flap;
+  });
+  return (
+    <group ref={ref} scale={0.2}>
+      <group ref={wingL}>
+        <mesh position={[-0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[1, 0.8]} />
+          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      <group ref={wingR}>
+        <mesh position={[0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[1, 0.8]} />
+          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      <mesh>
+        <capsuleGeometry args={[0.07, 0.5, 3, 6]} />
+        <meshBasicMaterial color="#40342a" />
       </mesh>
     </group>
   );
@@ -273,6 +559,7 @@ function Volcano() {
   const emberRefs = useRef<(THREE.Sprite | null)[]>([]);
   const smokeMap = useMemo(() => createGlowTexture('smoke-puff', 'rgba(120,110,115,0.9)'), []);
   const emberMap = useMemo(() => createGlowTexture('ember', 'rgba(255,160,60,1)'), []);
+  const baseY = useMemo(() => terrainHeight(-9, -9) - 0.2, []);
   const nSmoke = quality.tier === 'low' ? 0 : 6;
   const nEmber = quality.tier === 'low' ? 0 : 8;
 
@@ -300,7 +587,7 @@ function Volcano() {
   });
 
   return (
-    <group position={[-9, 0, -9]}>
+    <group position={[-9, baseY, -9]}>
       <mesh position={[0, 2.2, 0]} castShadow>
         <coneGeometry args={[4, 5, 20]} />
         <meshStandardMaterial color="#6b5648" flatShading roughness={1} />
@@ -334,101 +621,57 @@ function Volcano() {
   );
 }
 
-/** Palmera low-poly con tronco curvado y hojas en abanico. */
-function Palm({ position, rotation = 0, scale = 1 }: { position: [number, number, number]; rotation?: number; scale?: number }) {
-  return (
-    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
-      <mesh position={[0, 0.5, 0]} rotation={[0, 0, 0.12]} castShadow>
-        <cylinderGeometry args={[0.09, 0.13, 1, 6]} />
-        <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
-      </mesh>
-      <mesh position={[0.16, 1.3, 0]} rotation={[0, 0, 0.24]} castShadow>
-        <cylinderGeometry args={[0.07, 0.09, 1, 6]} />
-        <meshStandardMaterial color="#8a6a42" flatShading roughness={1} />
-      </mesh>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <group key={i} position={[0.32, 1.85, 0]} rotation={[0, (i / 6) * Math.PI * 2, 0]}>
-          <mesh position={[0.55, 0.05, 0]} rotation={[0, 0, -1.95]} scale={[0.3, 1.15, 0.06]} castShadow>
-            <coneGeometry args={[0.5, 1, 4]} />
-            <meshStandardMaterial color="#3f9e4d" flatShading roughness={1} side={THREE.DoubleSide} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
-/** Flores de colores salpicadas por la hierba. */
-function Flowers({ count }: { count: number }) {
-  const flowers = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => {
-        const a = (i * 2.399) % (Math.PI * 2);
-        const r = 3 + ((i * 53) % 130) / 10;
-        return {
-          key: i,
-          pos: [Math.cos(a) * r, -0.02, Math.sin(a) * r] as [number, number, number],
-          color: ['#ff6ec7', '#ffd166', '#ffffff', '#ff8c42'][i % 4],
-          s: 0.7 + ((i * 13) % 5) / 10,
-        };
-      }),
-    [count],
-  );
-  return (
-    <>
-      {flowers.map((f) => (
-        <group key={f.key} position={f.pos} scale={f.s}>
-          <mesh position={[0, 0.12, 0]}>
-            <cylinderGeometry args={[0.02, 0.02, 0.24, 4]} />
-            <meshStandardMaterial color="#3f7d3a" flatShading />
-          </mesh>
-          <mesh position={[0, 0.28, 0]}>
-            <sphereGeometry args={[0.08, 6, 6]} />
-            <meshStandardMaterial color={f.color} flatShading />
-          </mesh>
-        </group>
-      ))}
-    </>
-  );
-}
-
-/** Mariposa que revolotea por la isla batiendo las alas. */
-function Butterfly({ seed }: { seed: number }) {
-  const ref = useRef<THREE.Group>(null);
-  const wingL = useRef<THREE.Group>(null);
-  const wingR = useRef<THREE.Group>(null);
-  const color = ['#ff6ec7', '#ffd166', '#7fb3ff', '#b8f26e'][seed % 4];
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime * (0.22 + (seed % 3) * 0.06) + seed * 2.1;
-    const r = 4 + (seed % 5) * 2.4;
-    const g = ref.current;
-    if (g) {
-      g.position.set(Math.cos(t) * r, 1.1 + Math.sin(t * 2.3 + seed) * 0.5, Math.sin(t) * r);
-      g.rotation.y = -t + Math.PI / 2;
+/** Mar con olas y destellos: vértices ondulando + relieve animado (bump). */
+function Water() {
+  const quality = useApp((s) => s.quality);
+  const seg = quality.tier === 'high' ? 44 : quality.tier === 'medium' ? 30 : 14;
+  const geo = useMemo(() => new THREE.PlaneGeometry(170, 170, seg, seg), [seg]);
+  const base = useMemo(() => Float32Array.from(geo.attributes.position.array), [geo]);
+  const bump = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    for (let y = 0; y < 256; y += 2) {
+      for (let x = 0; x < 256; x += 2) {
+        const v = 110 + Math.floor(fbm2(x * 0.06, y * 0.06) * 120);
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(x, y, 2, 2);
+      }
     }
-    const flap = Math.sin(clock.elapsedTime * 13 + seed) * 0.85;
-    if (wingL.current) wingL.current.rotation.z = flap;
-    if (wingR.current) wingR.current.rotation.z = -flap;
+    const t = new THREE.CanvasTexture(canvas);
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(7, 7);
+    return t;
+  }, []);
+
+  useFrame((s, delta) => {
+    const t = s.clock.elapsedTime;
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = base[i * 3];
+      const y = base[i * 3 + 1];
+      pos.setZ(i, Math.sin(x * 0.12 + t) * 0.26 + Math.cos(y * 0.18 + t * 0.8) * 0.26);
+    }
+    pos.needsUpdate = true;
+    if (quality.tier === 'high') geo.computeVertexNormals();
+    bump.offset.x += delta * 0.016;
+    bump.offset.y += delta * 0.009;
   });
+
   return (
-    <group ref={ref} scale={0.2}>
-      <group ref={wingL}>
-        <mesh position={[-0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[1, 0.8]} />
-          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
-        </mesh>
-      </group>
-      <group ref={wingR}>
-        <mesh position={[0.5, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[1, 0.8]} />
-          <meshBasicMaterial color={color} side={THREE.DoubleSide} />
-        </mesh>
-      </group>
-      <mesh>
-        <capsuleGeometry args={[0.07, 0.5, 3, 6]} />
-        <meshBasicMaterial color="#40342a" />
-      </mesh>
-    </group>
+    <mesh geometry={geo} position={[0, WATER_Y, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <meshStandardMaterial
+        color="#2678b8"
+        transparent
+        opacity={0.92}
+        roughness={0.26}
+        metalness={0.08}
+        bumpMap={bump}
+        bumpScale={0.9}
+      />
+    </mesh>
   );
 }
 
@@ -439,51 +682,12 @@ function ShoreFoam() {
     const t = clock.elapsedTime;
     ref.current?.scale.setScalar(1 + Math.sin(t * 0.8) * 0.012);
     const m = ref.current?.material as THREE.MeshBasicMaterial | undefined;
-    if (m) m.opacity = 0.22 + Math.sin(t * 0.8) * 0.08;
+    if (m) m.opacity = 0.18 + Math.sin(t * 0.8) * 0.07;
   });
   return (
-    <mesh ref={ref} position={[0, -0.58, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[20.6, 21.6, 64]} />
-      <meshBasicMaterial color="#eaf6ff" transparent opacity={0.25} depthWrite={false} />
-    </mesh>
-  );
-}
-
-/** Postprocesado de la isla: bloom contenido (escena diurna) + ACES. */
-function IslandEffects() {
-  const quality = useApp((s) => s.quality);
-  if (!quality.postprocessing) return null;
-  return (
-    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
-      <Bloom intensity={0.55} luminanceThreshold={0.85} luminanceSmoothing={0.2} mipmapBlur radius={0.6} />
-      <Vignette eskil={false} offset={0.3} darkness={0.55} />
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-    </EffectComposer>
-  );
-}
-
-/** Mar con olas suaves (desplazamiento de vértices por seno). */
-function Water() {
-  const quality = useApp((s) => s.quality);
-  const seg = quality.tier === 'high' ? 48 : quality.tier === 'medium' ? 32 : 14;
-  const geo = useMemo(() => new THREE.PlaneGeometry(170, 170, seg, seg), [seg]);
-  const base = useMemo(() => Float32Array.from(geo.attributes.position.array), [geo]);
-
-  useFrame((s) => {
-    const t = s.clock.elapsedTime;
-    const pos = geo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = base[i * 3];
-      const y = base[i * 3 + 1];
-      pos.setZ(i, Math.sin(x * 0.12 + t) * 0.28 + Math.cos(y * 0.18 + t * 0.8) * 0.28);
-    }
-    pos.needsUpdate = true;
-    if (quality.tier === 'high') geo.computeVertexNormals();
-  });
-
-  return (
-    <mesh geometry={geo} position={[0, -1.0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <meshStandardMaterial color="#2b86c5" transparent opacity={0.92} roughness={0.35} metalness={0.1} flatShading />
+    <mesh ref={ref} position={[0, WATER_Y + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[20.4, 23, 72]} />
+      <meshBasicMaterial color="#eaf6ff" transparent opacity={0.22} depthWrite={false} />
     </mesh>
   );
 }
@@ -517,30 +721,51 @@ function Clouds() {
   );
 }
 
+/** Postprocesado de la isla: bloom contenido (escena diurna) + ACES. */
+function IslandEffects() {
+  const quality = useApp((s) => s.quality);
+  if (!quality.postprocessing) return null;
+  return (
+    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
+      <Bloom intensity={0.55} luminanceThreshold={0.85} luminanceSmoothing={0.2} mipmapBlur radius={0.6} />
+      <Vignette eskil={false} offset={0.3} darkness={0.55} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    </EffectComposer>
+  );
+}
+
 export default function DinoIslandScene() {
   const quality = useApp((s) => s.quality);
   const registry = useMemo<Registry>(() => new Map(), []);
   const controlsRef = useRef<{ enabled: boolean } | null>(null);
   const trees = useMemo(() => {
-    const n = scaleCount(16, quality, 6);
-    return Array.from({ length: n }, (_, i) => {
+    const n = scaleCount(18, quality, 7);
+    return Array.from({ length: n * 2 }, (_, i) => {
       const a = (i / n) * Math.PI * 2 + 0.6;
       const r = 4 + ((i * 37) % 12);
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const h = terrainHeight(x, z);
       return {
         key: i,
-        position: [Math.cos(a) * r, 0, Math.sin(a) * r] as [number, number, number],
-        scale: 0.8 + ((i * 13) % 7) / 10,
+        position: [x, h, z] as [number, number, number],
+        scale: 0.85 + ((i * 13) % 7) / 10,
+        ok: h > 0.05 && Math.hypot(x + 9, z + 9) > 6,
       };
-    });
+    })
+      .filter((t) => t.ok)
+      .slice(0, n);
   }, [quality]);
   const palms = useMemo(
     () =>
       Array.from({ length: 9 }, (_, i) => {
         const a = (i / 9) * Math.PI * 2 + 0.25;
         const r = 18.6 + ((i * 7) % 3) * 0.5;
+        const x = Math.cos(a) * r;
+        const z = Math.sin(a) * r;
         return {
           key: i,
-          position: [Math.cos(a) * r, -0.1, Math.sin(a) * r] as [number, number, number],
+          position: [x, terrainHeight(x, z), z] as [number, number, number],
           rotation: a + 1.2,
           scale: 0.9 + ((i * 11) % 5) / 10,
         };
@@ -552,37 +777,39 @@ export default function DinoIslandScene() {
   return (
     <div className="scene-canvas">
       <Canvas
-        shadows={quality.tier !== 'low'}
+        shadows={quality.tier === 'high' ? 'soft' : quality.tier === 'medium'}
         camera={{ position: [0, 12, 26], fov: 55 }}
         dpr={quality.dpr}
         gl={{ antialias: quality.antialias }}
       >
         <Sky sunPosition={[10, 6, -8]} turbidity={6} rayleigh={1.2} />
         <fog attach="fog" args={['#bcdcf5', 45, 90]} />
-        <hemisphereLight args={['#bcdcf5', '#5fa052', 0.7]} />
+        <hemisphereLight args={['#bcdcf5', '#5fa052', 0.65]} />
         <directionalLight
           position={[10, 16, 4]}
           intensity={2.2}
           color="#fff4e0"
           castShadow
-          shadow-mapSize={[1024, 1024]}
+          shadow-mapSize={quality.tier === 'high' ? [2048, 2048] : [1024, 1024]}
           shadow-camera-left={-30}
           shadow-camera-right={30}
           shadow-camera-top={30}
           shadow-camera-bottom={-30}
         />
-        <Island />
+        <Terrain />
         <Volcano />
         <Water />
         <ShoreFoam />
         <Clouds />
         {trees.map((t) => (
-          <Tree key={t.key} position={t.position} scale={t.scale} />
+          <Tree key={t.key} position={t.position} scale={t.scale} phase={t.key} />
         ))}
         {palms.map((p) => (
           <Palm key={p.key} position={p.position} rotation={p.rotation} scale={p.scale} />
         ))}
-        <Flowers count={scaleCount(20, quality, 8)} />
+        <GrassTufts count={scaleCount(260, quality, 70)} />
+        <Rocks count={scaleCount(24, quality, 10)} />
+        <Flowers count={scaleCount(26, quality, 10)} />
         {Array.from({ length: butterflies }).map((_, i) => (
           <Butterfly key={i} seed={i + 1} />
         ))}
