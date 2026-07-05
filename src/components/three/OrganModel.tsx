@@ -3,9 +3,13 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { Organ } from '../../data/types';
 import { HumanForm, Skeleton, Tube, type V3 } from './Anatomy';
+import { getAnatomyModelUrl } from '../../utils/anatomyModels';
+import GltfModel from './GltfModel';
 
-/** Modelo procedural de un órgano, con forma anatómica y su animación propia. */
+/** Modelo de un órgano: usa el GLB anatómico real si existe; si no, procedural. */
 export default function OrganModel({ organ, beating = true }: { organ: Organ; beating?: boolean }) {
+  const url = getAnatomyModelUrl(organ.id);
+  if (url) return <GltfModel url={url} height={1} />;
   switch (organ.id) {
     case 'pulmones':
       return <Lungs breathing={beating} />;
