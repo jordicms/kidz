@@ -604,6 +604,39 @@ body {
   max-width: 90%;
 }
 
+/* ---------- Selector de eras (isla de dinosaurios) ---------- */
+.era-selector {
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  z-index: 11;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.era-selector .control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* ---------- Excavación de fósiles ---------- */
+.dig-hint {
+  background: rgba(8, 10, 26, 0.82);
+  color: #fff;
+  border: 2px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* ---------- Carga de escena (code-splitting) ---------- */
 .scene-loader {
   position: absolute;
