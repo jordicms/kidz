@@ -26,7 +26,7 @@ export const ORGANS: Organ[] = [
     emoji: '🫀',
     system: 'circulatorio',
     color: '#d8324a',
-    position: [-0.25, 1.15, 0.35],
+    position: [-0.1, 0.52, 0.16],
     tagline: 'La bomba que nunca descansa',
     facts: [
       { icon: '💓', label: 'Latidos', value: '¡Unas 100.000 veces al día!' },
@@ -63,7 +63,7 @@ export const ORGANS: Organ[] = [
     emoji: '🫁',
     system: 'respiratorio',
     color: '#e58aa0',
-    position: [0, 0.6, 0.15],
+    position: [0, 0.58, 0.05],
     tagline: 'Dos globos que te dan aire',
     facts: [
       { icon: '🌬️', label: 'Respiras', value: 'Unas 20.000 veces al día' },
@@ -84,7 +84,7 @@ export const ORGANS: Organ[] = [
     emoji: '🧠',
     system: 'nervioso',
     color: '#e0a6d6',
-    position: [0, 1.5, 0.0],
+    position: [0, 1.46, 0.02],
     tagline: 'El jefe que controla todo',
     facts: [
       { icon: '🎮', label: 'Su trabajo', value: 'Controla todo tu cuerpo' },
@@ -105,7 +105,7 @@ export const ORGANS: Organ[] = [
     emoji: '🍎',
     system: 'digestivo',
     color: '#e8a23b',
-    position: [0.1, 0.0, 0.32],
+    position: [0.12, 0.06, 0.2],
     tagline: 'La bolsa donde empieza la digestión',
     facts: [
       { icon: '🥣', label: 'Cómo es', value: 'Una bolsa elástica que se estira' },
@@ -118,6 +118,27 @@ export const ORGANS: Organ[] = [
       { emoji: '🌀', title: 'A batir', text: 'Me muevo y amaso la comida, mezclándola con mis jugos hasta convertirla en una papilla.' },
       { emoji: '🧪', title: 'Jugos mágicos', text: 'Mis jugos deshacen la comida en trocitos diminutos para que el cuerpo pueda aprovecharla.' },
       { emoji: '➡️', title: 'Sigue el viaje', text: 'Luego la papilla pasa al intestino, donde se cogen las vitaminas y la energía. ¡La digestión es un viaje largo!' },
+    ],
+  },
+  {
+    id: 'intestinos',
+    name: 'Los Intestinos',
+    emoji: '🌀',
+    system: 'digestivo',
+    color: '#d99a7a',
+    position: [0, -0.2, 0.18],
+    tagline: 'El túnel larguísimo de la digestión',
+    facts: [
+      { icon: '📏', label: 'Largo', value: '¡El delgado mide unos 6-7 metros!' },
+      { icon: '🥦', label: 'Su trabajo', value: 'Coge las vitaminas y la energía de la comida' },
+      { icon: '💧', label: 'Intestino grueso', value: 'Recupera el agua de lo que sobra' },
+      { icon: '🦠', label: 'Amiguitos', value: 'Millones de bacterias buenas viven ahí' },
+    ],
+    story: [
+      { emoji: '🌀', title: '¡Somos los intestinos!', text: 'Somos un tubo larguísimo, enrollado dentro de tu barriga. ¡Si nos estirásemos, mediríamos más que un autobús!' },
+      { emoji: '🥦', title: 'Intestino delgado', text: 'Aquí se cogen las vitaminas y la energía de la comida y pasan a la sangre. Es la parte más larga y enrollada.' },
+      { emoji: '💧', title: 'Intestino grueso', text: 'Rodea a los demás como un marco. Recupera el agua de lo que ya no sirve antes de despedirlo.' },
+      { emoji: '🦠', title: 'Bichitos buenos', text: 'Millones de bacterias amigas viven dentro y nos ayudan a digerir. ¡Cuídalas comiendo fruta y verdura!' },
     ],
   },
   {
@@ -221,7 +242,7 @@ export function getJourney(id: string): Journey | undefined {
 }
 
 /** Órganos discretos que se muestran dentro de la figura (no capas enteras). */
-export const INNER_ORGAN_IDS = ['corazon', 'pulmones', 'cerebro', 'estomago'] as const;
+export const INNER_ORGAN_IDS = ['corazon', 'pulmones', 'cerebro', 'estomago', 'intestinos'] as const;
 
 /** Órgano representativo de cada sistema (para el toggle de sistemas). */
 export const SYSTEM_ORGAN: Record<string, string> = {

@@ -14,13 +14,23 @@ import FactsGrid from '../components/ui/FactsGrid';
 import PhotoCard from '../components/ui/PhotoCard';
 import { getPhoto } from '../utils/photos';
 
+const FIT: Record<string, number> = {
+  corazon: 1.5,
+  cerebro: 1.9,
+  estomago: 1.7,
+  pulmones: 1.0,
+  intestinos: 1.4,
+  huesos: 1.4,
+  musculos: 1.4,
+};
+
 function Turntable({ organ }: { organ: Organ }) {
   const ref = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += 0.3 * delta;
   });
   return (
-    <group ref={ref}>
+    <group ref={ref} scale={FIT[organ.id] ?? 1.4}>
       <OrganModel organ={organ} beating />
     </group>
   );
