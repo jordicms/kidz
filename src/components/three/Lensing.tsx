@@ -12,10 +12,12 @@ const fragmentShader = /* glsl */ `
   uniform vec2 uHole;
   uniform float uRadius;
   uniform float uStrength;
-  uniform float uAspect;
   uniform float uRingGain;
 
   void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+    // El aspecto se saca de la resolución (uniform de postprocessing): así el
+    // efecto no se recrea al redimensionar la vista (barra del navegador en iOS).
+    float uAspect = resolution.x / resolution.y;
     vec2 d = uv - uHole;
     d.x *= uAspect;
     float dist = length(d);
@@ -41,18 +43,16 @@ const fragmentShader = /* glsl */ `
 interface LensingOptions {
   radius?: number;
   strength?: number;
-  aspect?: number;
   ringGain?: number;
 }
 
 class LensingEffectImpl extends Effect {
-  constructor({ radius = 0.14, strength = 0.06, aspect = 1, ringGain = 0 }: LensingOptions = {}) {
+  constructor({ radius = 0.14, strength = 0.06, ringGain = 0 }: LensingOptions = {}) {
     super('LensingEffect', fragmentShader, {
       uniforms: new Map<string, THREE.Uniform>([
         ['uHole', new THREE.Uniform(new THREE.Vector2(0.5, 0.5))],
         ['uRadius', new THREE.Uniform(radius)],
         ['uStrength', new THREE.Uniform(strength)],
-        ['uAspect', new THREE.Uniform(aspect)],
         ['uRingGain', new THREE.Uniform(ringGain)],
       ]),
     });
