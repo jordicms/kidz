@@ -106,6 +106,71 @@ export function playHeartbeat(bpm = 90, beats = 3): void {
   }
 }
 
+/** Golpe seco y terroso al quitar un pedazo de tierra en la excavación. */
+export function playDig(): void {
+  if (muted) return;
+  const ac = getCtx();
+  if (!ac) return;
+  const now = ac.currentTime;
+  // Ráfaga de ruido corta y grave (tierra que se desmorona).
+  const len = Math.floor(ac.sampleRate * 0.18);
+  const buffer = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ac.createBufferSource();
+  src.buffer = buffer;
+  const lp = ac.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(900, now);
+  lp.frequency.exponentialRampToValueAtTime(250, now + 0.16);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.35, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+  src.connect(lp).connect(g).connect(ac.destination);
+  src.start(now);
+}
+
+/** "Clac" alegre al encajar un hueso en su sitio (tono ascendente corto). */
+export function playPop(): void {
+  if (muted) return;
+  const ac = getCtx();
+  if (!ac) return;
+  const now = ac.currentTime;
+  const osc = ac.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, now);
+  osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.3, now + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  osc.connect(g).connect(ac.destination);
+  osc.start(now);
+  osc.stop(now + 0.2);
+}
+
+/** Fanfarria corta de celebración (arpegio mayor ascendente). */
+export function playFanfare(): void {
+  if (muted) return;
+  const ac = getCtx();
+  if (!ac) return;
+  const now = ac.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5]; // Do–Mi–Sol–Do
+  notes.forEach((f, i) => {
+    const at = now + i * 0.12;
+    const osc = ac.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(f, at);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(0.28, at + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+    osc.connect(g).connect(ac.destination);
+    osc.start(at);
+    osc.stop(at + 0.55);
+  });
+}
+
 /** "Whoosh" para las transiciones entre escenas (ruido con barrido de filtro). */
 export function playWhoosh(): void {
   if (muted) return;

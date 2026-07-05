@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls, Sky } from '@react-three/drei';
-import { DINOS, ERA_COLORS, type Dino } from '../data/dinos';
+import { DINOS, ERA_COLORS, type Dino, type DinoEra } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
@@ -18,6 +18,87 @@ import { ToneMappingMode } from 'postprocessing';
 /* ------------------------------------------------------------------ */
 
 const WATER_Y = -1.0;
+
+/* ------------------------------------------------------------------ */
+/* Eras jugables: cada una cambia el clima y la vegetación de la isla   */
+/* ------------------------------------------------------------------ */
+export type EraFilter = DinoEra | 'all';
+
+interface EraEnv {
+  sky: { sunPosition: [number, number, number]; turbidity: number; rayleigh: number };
+  fog: [string, number, number];
+  hemi: [string, string, number];
+  sun: { color: string; intensity: number };
+  /** Color de la copa de los árboles. */
+  leaf: string;
+  /** Tintes del terreno (arena / hierba). */
+  sand: string;
+  grass: string;
+  treeMul: number;
+  flowerMul: number;
+  grassMul: number;
+  rockMul: number;
+}
+
+const ENV_DEFAULT: EraEnv = {
+  sky: { sunPosition: [10, 6, -8], turbidity: 6, rayleigh: 1.2 },
+  fog: ['#bcdcf5', 45, 90],
+  hemi: ['#bcdcf5', '#5fa052', 0.65],
+  sun: { color: '#fff4e0', intensity: 2.2 },
+  leaf: '#569a4c',
+  sand: '#e2cf96',
+  grass: '#569a4c',
+  treeMul: 1,
+  flowerMul: 1,
+  grassMul: 1,
+  rockMul: 1,
+};
+
+export const ERA_ENV: Record<EraFilter, EraEnv> = {
+  all: ENV_DEFAULT,
+  // Triásico: árido, cálido y rojizo; poca vegetación y muchas rocas.
+  Triásico: {
+    sky: { sunPosition: [8, 5, -6], turbidity: 10, rayleigh: 0.6 },
+    fog: ['#e8c49a', 36, 80],
+    hemi: ['#e8c49a', '#7a5a34', 0.72],
+    sun: { color: '#ffd7a0', intensity: 2.5 },
+    leaf: '#8a7f3a',
+    sand: '#e6c98e',
+    grass: '#b3a052',
+    treeMul: 0.4,
+    flowerMul: 0,
+    grassMul: 0.5,
+    rockMul: 1.8,
+  },
+  // Jurásico: exuberante y muy verde; bosques densos.
+  Jurásico: {
+    sky: { sunPosition: [10, 7, -8], turbidity: 4, rayleigh: 1.6 },
+    fog: ['#b6e0c0', 48, 95],
+    hemi: ['#cdeecf', '#4f9a48', 0.7],
+    sun: { color: '#f6ffe8', intensity: 2.2 },
+    leaf: '#3f8a3f',
+    sand: '#d8cf96',
+    grass: '#4a9a44',
+    treeMul: 1.35,
+    flowerMul: 0.05,
+    grassMul: 1.4,
+    rockMul: 0.9,
+  },
+  // Cretácico: variado y con muchas flores (aparecieron en esta era).
+  Cretácico: {
+    sky: { sunPosition: [11, 6, -7], turbidity: 6, rayleigh: 1.2 },
+    fog: ['#c8e0f5', 45, 90],
+    hemi: ['#cfe4ff', '#5fa052', 0.68],
+    sun: { color: '#fff2de', intensity: 2.2 },
+    leaf: '#569a4c',
+    sand: '#e2cf96',
+    grass: '#5aa04e',
+    treeMul: 1,
+    flowerMul: 1.5,
+    grassMul: 1,
+    rockMul: 1,
+  },
+};
 
 function hash2(ix: number, iz: number): number {
   const s = Math.sin(ix * 127.1 + iz * 311.7) * 43758.5453;
@@ -61,7 +142,7 @@ function terrainHeight(x: number, z: number): number {
 /** Malla del terreno con colores por altura: arena → hierba → roca.
  *  Con texturas PBR descargadas (npm run pbr), la hierba real se tiñe por
  *  zonas (el color de vértice multiplica al mapa). */
-function Terrain() {
+function Terrain({ env }: { env: EraEnv }) {
   const pbr = usePBR('grass', 26);
   const textured = !!pbr;
   const geo = useMemo(() => {
@@ -70,9 +151,10 @@ function Terrain() {
     const pos = g.attributes.position;
     const colors = new Float32Array(pos.count * 3);
     // Con textura, los colores pasan a ser TINTES sobre la foto de hierba.
-    const sand = new THREE.Color(textured ? '#f2e3bd' : '#e2cf96');
-    const grassA = new THREE.Color(textured ? '#ffffff' : '#569a4c');
-    const grassB = new THREE.Color(textured ? '#d8e0cc' : '#477f3e');
+    const grassBase = new THREE.Color(env.grass);
+    const sand = new THREE.Color(textured ? '#f2e3bd' : env.sand);
+    const grassA = new THREE.Color(textured ? '#ffffff' : env.grass);
+    const grassB = new THREE.Color(textured ? '#d8e0cc' : grassBase.clone().multiplyScalar(0.82).getStyle());
     const rock = new THREE.Color(textured ? '#c9c2b4' : '#8b8072');
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
@@ -92,7 +174,7 @@ function Terrain() {
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     g.computeVertexNormals();
     return g;
-  }, [textured]);
+  }, [textured, env.grass, env.sand]);
   return (
     <mesh geometry={geo} receiveShadow>
       <meshStandardMaterial
@@ -350,8 +432,10 @@ function Sway({ children, phase = 0, amp = 0.022 }: { children: ReactNode; phase
 }
 
 /** Árbol frondoso: tronco + copa de bolas irregulares, mecido por el viento. */
-function Tree({ position, scale, phase = 0 }: { position: [number, number, number]; scale: number; phase?: number }) {
+function Tree({ position, scale, phase = 0, leaf = '#569a4c' }: { position: [number, number, number]; scale: number; phase?: number; leaf?: string }) {
   const bark = usePBR('bark', 1);
+  const leafDark = useMemo(() => new THREE.Color(leaf).multiplyScalar(0.85).getStyle(), [leaf]);
+  const leafLight = useMemo(() => new THREE.Color(leaf).multiplyScalar(1.15).getStyle(), [leaf]);
   return (
     <group position={position} scale={scale}>
       <Sway phase={phase}>
@@ -367,19 +451,19 @@ function Tree({ position, scale, phase = 0 }: { position: [number, number, numbe
         </mesh>
         <mesh position={[0, 1.55, 0]} castShadow>
           <icosahedronGeometry args={[0.75, 1]} />
-          <meshStandardMaterial color="#4a8a44" flatShading roughness={1} />
+          <meshStandardMaterial color={leafDark} flatShading roughness={1} />
         </mesh>
         <mesh position={[0.48, 1.3, 0.16]} castShadow>
           <icosahedronGeometry args={[0.5, 1]} />
-          <meshStandardMaterial color="#569a4c" flatShading roughness={1} />
+          <meshStandardMaterial color={leaf} flatShading roughness={1} />
         </mesh>
         <mesh position={[-0.42, 1.38, -0.12]} castShadow>
           <icosahedronGeometry args={[0.46, 1]} />
-          <meshStandardMaterial color="#63a854" flatShading roughness={1} />
+          <meshStandardMaterial color={leafLight} flatShading roughness={1} />
         </mesh>
         <mesh position={[0, 2.1, 0]} castShadow>
           <icosahedronGeometry args={[0.42, 1]} />
-          <meshStandardMaterial color="#569a4c" flatShading roughness={1} />
+          <meshStandardMaterial color={leaf} flatShading roughness={1} />
         </mesh>
       </Sway>
     </group>
@@ -771,10 +855,13 @@ function IslandEffects() {
 
 export default function DinoIslandScene() {
   const quality = useApp((s) => s.quality);
-  const registry = useMemo<Registry>(() => new Map(), []);
+  const [era, setEra] = useState<EraFilter>('all');
+  const env = ERA_ENV[era];
+  const registry = useMemo<Registry>(() => new Map(), [era]);
   const controlsRef = useRef<{ enabled: boolean } | null>(null);
+  const shownDinos = useMemo(() => (era === 'all' ? DINOS : DINOS.filter((d) => d.era === era)), [era]);
   const trees = useMemo(() => {
-    const n = scaleCount(18, quality, 7);
+    const n = Math.max(2, Math.round(scaleCount(18, quality, 7) * env.treeMul));
     return Array.from({ length: n * 2 }, (_, i) => {
       const a = (i / n) * Math.PI * 2 + 0.6;
       const r = 4 + ((i * 37) % 12);
@@ -790,7 +877,7 @@ export default function DinoIslandScene() {
     })
       .filter((t) => t.ok)
       .slice(0, n);
-  }, [quality]);
+  }, [quality, env.treeMul]);
   const palms = useMemo(
     () =>
       Array.from({ length: 9 }, (_, i) => {
@@ -808,61 +895,84 @@ export default function DinoIslandScene() {
     [],
   );
   const butterflies = quality.tier === 'low' ? 2 : 5;
+  const eraChips: { key: EraFilter; label: string }[] = [
+    { key: 'all', label: '🌍 Todas' },
+    { key: 'Triásico', label: 'Triásico' },
+    { key: 'Jurásico', label: 'Jurásico' },
+    { key: 'Cretácico', label: 'Cretácico' },
+  ];
 
   return (
-    <div className="scene-canvas">
-      <Canvas
-        shadows={quality.tier === 'high' ? 'soft' : quality.tier === 'medium'}
-        camera={{ position: [0, 12, 26], fov: 55 }}
-        dpr={quality.dpr}
-        gl={{ antialias: quality.antialias }}
-      >
-        <Sky sunPosition={[10, 6, -8]} turbidity={6} rayleigh={1.2} />
-        <fog attach="fog" args={['#bcdcf5', 45, 90]} />
-        <hemisphereLight args={['#bcdcf5', '#5fa052', 0.65]} />
-        <directionalLight
-          position={[10, 16, 4]}
-          intensity={2.2}
-          color="#fff4e0"
-          castShadow
-          shadow-mapSize={quality.tier === 'high' ? [2048, 2048] : [1024, 1024]}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
-        />
-        <Terrain />
-        <Volcano />
-        <Water />
-        <ShoreFoam />
-        <Clouds />
-        {trees.map((t) => (
-          <Tree key={t.key} position={t.position} scale={t.scale} phase={t.key} />
-        ))}
-        {palms.map((p) => (
-          <Palm key={p.key} position={p.position} rotation={p.rotation} scale={p.scale} />
-        ))}
-        <GrassTufts count={scaleCount(260, quality, 70)} />
-        <Rocks count={scaleCount(24, quality, 10)} />
-        <Flowers count={scaleCount(26, quality, 10)} />
-        {Array.from({ length: butterflies }).map((_, i) => (
-          <Butterfly key={i} seed={i + 1} />
-        ))}
-        {DINOS.map((d) => (
-          <DinoActor key={d.id} dino={d} registry={registry} />
-        ))}
-        <OrbitControls
-          ref={controlsRef as never}
-          enablePan={false}
-          minDistance={10}
-          maxDistance={50}
-          maxPolarAngle={Math.PI * 0.49}
-          target={[0, 1, 0]}
-        />
-        <IntroFly from={[0, 30, 64]} to={[0, 12, 26]} look={[0, 1, 0]} duration={2.6} controls={controlsRef} />
-        <AdaptiveQuality />
-        <IslandEffects />
-      </Canvas>
-    </div>
+    <>
+      <div className="scene-canvas">
+        <Canvas
+          shadows={quality.tier === 'high' ? 'soft' : quality.tier === 'medium'}
+          camera={{ position: [0, 12, 26], fov: 55 }}
+          dpr={quality.dpr}
+          gl={{ antialias: quality.antialias }}
+        >
+          <Sky sunPosition={env.sky.sunPosition} turbidity={env.sky.turbidity} rayleigh={env.sky.rayleigh} />
+          <fog attach="fog" args={env.fog} />
+          <hemisphereLight args={env.hemi} />
+          <directionalLight
+            position={[10, 16, 4]}
+            intensity={env.sun.intensity}
+            color={env.sun.color}
+            castShadow
+            shadow-mapSize={quality.tier === 'high' ? [2048, 2048] : [1024, 1024]}
+            shadow-camera-left={-30}
+            shadow-camera-right={30}
+            shadow-camera-top={30}
+            shadow-camera-bottom={-30}
+          />
+          <Terrain env={env} />
+          <Volcano />
+          <Water />
+          <ShoreFoam />
+          <Clouds />
+          {trees.map((t) => (
+            <Tree key={t.key} position={t.position} scale={t.scale} phase={t.key} leaf={env.leaf} />
+          ))}
+          {palms.map((p) => (
+            <Palm key={p.key} position={p.position} rotation={p.rotation} scale={p.scale} />
+          ))}
+          <GrassTufts count={Math.round(scaleCount(260, quality, 70) * env.grassMul)} />
+          <Rocks count={Math.round(scaleCount(24, quality, 10) * env.rockMul)} />
+          <Flowers count={Math.round(scaleCount(26, quality, 10) * env.flowerMul)} />
+          {Array.from({ length: butterflies }).map((_, i) => (
+            <Butterfly key={i} seed={i + 1} />
+          ))}
+          {shownDinos.map((d) => (
+            <DinoActor key={d.id} dino={d} registry={registry} />
+          ))}
+          <OrbitControls
+            ref={controlsRef as never}
+            enablePan={false}
+            minDistance={10}
+            maxDistance={50}
+            maxPolarAngle={Math.PI * 0.49}
+            target={[0, 1, 0]}
+          />
+          <IntroFly from={[0, 30, 64]} to={[0, 12, 26]} look={[0, 1, 0]} duration={2.6} controls={controlsRef} />
+          <AdaptiveQuality />
+          <IslandEffects />
+        </Canvas>
+      </div>
+
+      <div className="era-selector">
+        <div className="control-row">
+          {eraChips.map((c) => (
+            <button
+              key={c.key}
+              className={`chip-btn${era === c.key ? ' active' : ''}`}
+              onClick={() => setEra(c.key)}
+              style={c.key !== 'all' && era !== c.key ? { borderColor: ERA_COLORS[c.key as DinoEra] } : undefined}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
