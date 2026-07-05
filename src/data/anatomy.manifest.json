@@ -1,0 +1,20 @@
+{
+  "_comment": "Modelos anatómicos reales (GLB). Ejecuta `npm run anatomy` para descargarlos a src/assets/anatomy/<key>.glb. Rellena cada `url` con un enlace DIRECTO a un .glb. La app usa el modelo real si existe y, si no, la anatomía procedural. key = id del órgano (corazon/pulmones/cerebro/estomago/intestinos/huesos/musculos) o `cuerpo` (figura completa). Las entradas con url vacía se omiten.",
+  "_fuentes": [
+    "BodyParts3D / Anatomography (CC BY-SA 2.1 JP): lifesciencedb.jp/bp3d — exporta a glTF con Blender.",
+    "NIH 3D (3d.nih.gov): muchos modelos anatómicos CC0/dominio público; convierte STL→GLB con Blender o gltf-transform.",
+    "Z-Anatomy (CC BY-SA): z-anatomy.com — abre el .blend y exporta la pieza a .glb.",
+    "Sketchfab: filtra 'Downloadable' + licencias CC; revisa la licencia de cada modelo.",
+    "Optimiza siempre con gltf-transform (draco/meshopt) para que pesen poco."
+  ],
+  "models": [
+    { "key": "cuerpo", "url": "", "credit": "", "license": "verify", "uso": "figura completa (piel/músculo)" },
+    { "key": "huesos", "url": "", "credit": "", "license": "verify", "uso": "esqueleto" },
+    { "key": "musculos", "url": "", "credit": "", "license": "verify", "uso": "sistema muscular" },
+    { "key": "corazon", "url": "", "credit": "", "license": "verify", "uso": "corazón" },
+    { "key": "pulmones", "url": "", "credit": "", "license": "verify", "uso": "pulmones" },
+    { "key": "cerebro", "url": "", "credit": "", "license": "verify", "uso": "cerebro" },
+    { "key": "estomago", "url": "", "credit": "", "license": "verify", "uso": "estómago" },
+    { "key": "intestinos", "url": "", "credit": "", "license": "verify", "uso": "intestinos" }
+  ]
+}

@@ -12,7 +12,8 @@
     "models": "node scripts/fetch-models.mjs",
     "textures": "node scripts/fetch-textures.mjs",
     "cap:sync": "npm run build && cap sync",
-    "pbr": "node scripts/fetch-pbr.mjs"
+    "pbr": "node scripts/fetch-pbr.mjs",
+    "anatomy": "node scripts/fetch-anatomy.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.0.0",

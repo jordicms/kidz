@@ -6,8 +6,16 @@ import { useApp } from '../state/store';
 import { playHeartbeat } from '../utils/sound';
 import OrganModel from '../components/three/OrganModel';
 import { HumanForm, Skeleton, Circulatory, NervousNet } from '../components/three/Anatomy';
+import GltfModel from '../components/three/GltfModel';
+import { getAnatomyModelUrl } from '../utils/anatomyModels';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
+
+/** Modelo anatómico real a tamaño de cuerpo (~3,4 u) si existe; si no, el procedural. */
+function whole(id: string, fallback: React.ReactNode) {
+  const url = getAnatomyModelUrl(id);
+  return url ? <GltfModel url={url} height={3.4} /> : fallback;
+}
 
 const ORGANS_LAYER = BODY_LAYERS.length - 1;
 // Escalas realistas de cada órgano dentro del cuerpo (~3,4 u de alto).
@@ -82,18 +90,10 @@ function TappableWhole({ id, children }: { id: string; children: React.ReactNode
 function BodyContent({ layer, system }: { layer: number; system: string | null }) {
   // Sistemas
   if (system === 'oseo') {
-    return (
-      <TappableWhole id="huesos">
-        <Skeleton />
-      </TappableWhole>
-    );
+    return <TappableWhole id="huesos">{whole('huesos', <Skeleton />)}</TappableWhole>;
   }
   if (system === 'muscular') {
-    return (
-      <TappableWhole id="musculos">
-        <HumanForm tone="#a83a3a" />
-      </TappableWhole>
-    );
+    return <TappableWhole id="musculos">{whole('musculos', <HumanForm tone="#a83a3a" />)}</TappableWhole>;
   }
   if (system === 'circulatorio') {
     return (
@@ -132,14 +132,14 @@ function BodyContent({ layer, system }: { layer: number; system: string | null }
   }
 
   // Capas (pelar)
-  if (layer === 0) return <HumanForm tone={SKIN} />;
+  if (layer === 0) return <>{whole('cuerpo', <HumanForm tone={SKIN} />)}</>;
   if (layer === 1) return <HumanForm tone="#f2d79a" />; // grasa
-  if (layer === 2) return <HumanForm tone="#b23b3b" />; // músculos
-  if (layer === 3) return <Skeleton />; // huesos
+  if (layer === 2) return <>{whole('musculos', <HumanForm tone="#b23b3b" />)}</>; // músculos
+  if (layer === 3) return <>{whole('huesos', <Skeleton />)}</>; // huesos
   return (
     <>
       <HumanForm tone={GHOST} opacity={0.1} />
-      <Skeleton opacity={0.12} />
+      {!getAnatomyModelUrl('huesos') && <Skeleton opacity={0.12} />}
       {INNER_ORGAN_IDS.map((id) => (
         <OrganInBody key={id} id={id} />
       ))}
