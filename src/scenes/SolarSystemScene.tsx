@@ -9,7 +9,7 @@ import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import CelestialBody from '../components/three/CelestialBody';
-import { createMoonTexture } from '../utils/textures';
+import { createMoonTexture, createGlowTexture } from '../utils/textures';
 import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
 const _hoverTarget = new THREE.Vector3();
@@ -350,6 +350,67 @@ function SolarEffects({ sun }: { sun: THREE.Mesh | null }) {
   );
 }
 
+/** Cometa en órbita muy elíptica; su cola apunta siempre en contra del Sol. */
+function Comet() {
+  const group = useRef<THREE.Group>(null);
+  const tail = useRef<THREE.Group>(null);
+  const angle = useRef(1.2);
+  const speed = useApp((s) => s.speed);
+  const openDeepSpace = useApp((s) => s.openDeepSpace);
+  const coma = useMemo(() => createGlowTexture('comet-coma', 'rgba(200,235,255,1)'), []);
+  const scene = useMemo<SceneConf>(
+    () => ({ size: 0.5, distance: 46, orbitSpeed: 0.55, rotationSpeed: 0, eccentricity: 0.66, periapsis: 2.4, inclination: 0.5 }),
+    [],
+  );
+  const dir = useMemo(() => new THREE.Vector3(), []);
+  const quat = useMemo(() => new THREE.Quaternion(), []);
+  const up = useMemo(() => new THREE.Vector3(0, -1, 0), []);
+
+  useFrame((_, delta) => {
+    const r = orbitRadius(scene, angle.current);
+    const ratio = scene.distance / r;
+    angle.current += scene.orbitSpeed * speed * delta * 0.35 * ratio * ratio;
+    const [x, y, z] = orbitPoint(scene, angle.current);
+    group.current?.position.set(x, y, z);
+    dir.set(x, y, z).normalize(); // dirección "en contra del Sol"
+    quat.setFromUnitVectors(up, dir);
+    tail.current?.quaternion.copy(quat);
+  });
+
+  return (
+    <group
+      ref={group}
+      onClick={(e) => {
+        e.stopPropagation();
+        openDeepSpace('cometa');
+      }}
+      onPointerOver={() => (document.body.style.cursor = 'pointer')}
+      onPointerOut={() => (document.body.style.cursor = 'auto')}
+    >
+      <mesh>
+        <sphereGeometry args={[0.18, 16, 16]} />
+        <meshStandardMaterial color="#dff0ff" emissive="#bfe0ff" emissiveIntensity={1.6} toneMapped={false} />
+      </mesh>
+      <sprite scale={[1.5, 1.5, 1]}>
+        <spriteMaterial map={coma} transparent opacity={0.85} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </sprite>
+      <group ref={tail}>
+        {/* Cola de iones (azulada, larga y recta) */}
+        <mesh position={[0, -3.2, 0]}>
+          <coneGeometry args={[0.95, 6.4, 16, 1, true]} />
+          <meshBasicMaterial color="#9fd6ff" transparent opacity={0.4} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+        {/* Cola de polvo (más blanca y corta) */}
+        <mesh position={[0.15, -1.9, 0.1]} rotation={[0, 0, 0.18]}>
+          <coneGeometry args={[0.55, 3.6, 12, 1, true]} />
+          <meshBasicMaterial color="#ffe9c8" transparent opacity={0.3} side={THREE.DoubleSide} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+      </group>
+      <BodyLabel body={{ id: 'cometa', name: 'Cometa', emoji: '☄️' } as unknown as Body} offsetY={1} onTap={() => openDeepSpace('cometa')} />
+    </group>
+  );
+}
+
 export default function SolarSystemScene() {
   const bodies = [...PLANETS, ...DWARF_PLANETS];
   const quality = useApp((s) => s.quality);
@@ -387,7 +448,9 @@ export default function SolarSystemScene() {
           <OrbitingBody key={b.id} body={b} onSelect={onSelect} />
         ))}
         <AsteroidBelt count={scaleCount(ASTEROID_BELT.count, quality, 200)} />
-        <ShootingStars count={2} radius={140} />
+        <Comet />
+        {/* Lluvia de meteoritos: estrellas fugaces frecuentes cruzando el cielo */}
+        <ShootingStars count={quality.tier === 'low' ? 3 : 6} radius={120} />
         <OrbitControls
           ref={controlsRef as never}
           enablePan={false}

@@ -15,6 +15,7 @@ export type View =
   | 'universe'
   | 'blackhole'
   | 'starlife'
+  | 'constellations'
   | 'dino-island'
   | 'dino'
   | 'body'
@@ -52,6 +53,7 @@ interface AppState {
   goUniverse: () => void;
   goBlackHole: () => void;
   goStarLife: () => void;
+  goConstellations: () => void;
   goDinoIsland: () => void;
   openDino: (id: string) => void;
   goBody: () => void;
@@ -122,6 +124,7 @@ export const useApp = create<AppState>((set) => ({
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
   goBlackHole: () => set({ view: 'blackhole', deepSpaceId: null }),
   goStarLife: () => set({ view: 'starlife' }),
+  goConstellations: () => set({ view: 'constellations' }),
   goDinoIsland: () => set({ view: 'dino-island', dinoId: null, deepSpaceId: null }),
   openDino: (id) => set((s) => ({ view: 'dino', dinoId: id, visited: visit(s.visited, `dino:${id}`) })),
   goBody: () => set({ view: 'body', organId: null, journeyId: null, deepSpaceId: null }),
