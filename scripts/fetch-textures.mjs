@@ -9,22 +9,32 @@
  * Genera CREDITS-textures.md con las atribuciones (Solar System Scope es CC BY 4.0).
  */
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'src', 'assets', 'textures');
 const manifest = JSON.parse(await readFile(join(root, 'src', 'data', 'textures.manifest.json'), 'utf8'));
+const force = process.argv.includes('--force');
 
 await mkdir(outDir, { recursive: true });
 
 const credits = [];
 let ok = 0;
+let skipped = 0;
 const failed = [];
 
 for (const t of manifest.textures) {
   const base = t.url.split('?')[0];
   const ext = (base.match(/\.(jpe?g|png|webp)$/i)?.[1] || 'jpg').toLowerCase();
+  // Salta lo ya descargado (usa --force para re-descargar todo).
+  if (!force && existsSync(join(outDir, `${t.key}.${ext}`))) {
+    credits.push(`- **${t.key}** — ${t.credit} (${t.license})`);
+    skipped++;
+    continue;
+  }
+  await new Promise((r) => setTimeout(r, 350));
   try {
     const res = await fetch(t.url, { headers: { 'User-Agent': 'KidzExplora/1.0 (educational app)' }, redirect: 'follow' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -45,5 +55,5 @@ await writeFile(
   `# Créditos de las texturas de los astros\n\nDescargadas con \`scripts/fetch-textures.mjs\`. Las de Solar System Scope son CC BY 4.0: mantener la atribución.\n\n${credits.join('\n')}\n`,
 );
 
-console.log(`\nListo: ${ok} descargadas, ${failed.length} fallidas.`);
+console.log(`\nListo: ${ok} descargadas, ${skipped} ya existían, ${failed.length} fallidas.`);
 if (failed.length) console.log(`Corrige estas claves en src/data/textures.manifest.json: ${failed.join(', ')}`);

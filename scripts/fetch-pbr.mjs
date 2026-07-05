@@ -9,12 +9,14 @@
  * usa los materiales de color plano de siempre.
  */
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'src', 'assets', 'pbr');
 const manifest = JSON.parse(await readFile(join(root, 'src', 'data', 'pbr.manifest.json'), 'utf8'));
+const force = process.argv.includes('--force');
 
 await mkdir(outDir, { recursive: true });
 
@@ -26,6 +28,7 @@ const MAPS = [
 ];
 
 let ok = 0;
+let skipped = 0;
 const failed = [];
 const credits = [];
 
@@ -33,6 +36,11 @@ for (const set of manifest.sets) {
   for (const [short, suffix] of MAPS) {
     const url = `https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/${set.slug}/${set.slug}_${suffix}_1k.jpg`;
     const dest = join(outDir, `${set.key}-${short}.jpg`);
+    // Salta lo ya descargado (usa --force para re-descargar todo).
+    if (!force && existsSync(dest)) {
+      skipped++;
+      continue;
+    }
     try {
       const res = await fetch(url, { headers: { 'User-Agent': 'KidzExplora/1.0 (educational app)' }, redirect: 'follow' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -54,5 +62,5 @@ await writeFile(
   `# Créditos de texturas PBR\n\nDescargadas con \`scripts/fetch-pbr.mjs\` desde Poly Haven (licencia CC0, sin atribución requerida — se agradece igualmente).\n\n${credits.join('\n')}\n`,
 );
 
-console.log(`\nListo: ${ok} descargadas, ${failed.length} fallidas.`);
+console.log(`\nListo: ${ok} descargadas, ${skipped} ya existían, ${failed.length} fallidas.`);
 if (failed.length) console.log(`Corrige los slugs en src/data/pbr.manifest.json: ${failed.join(', ')}`);

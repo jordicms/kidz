@@ -10,22 +10,30 @@
  * entradas sin url se omiten. Optimiza después con gltf-transform si pesan mucho.
  */
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'src', 'assets', 'models');
 const manifest = JSON.parse(await readFile(join(root, 'src', 'data', 'models.manifest.json'), 'utf8'));
+const force = process.argv.includes('--force');
 
 await mkdir(outDir, { recursive: true });
 
 let ok = 0;
+let skipped = 0;
 const pending = [];
 const failed = [];
 
 for (const m of manifest.models) {
   if (!m.url) {
     pending.push(m.key);
+    continue;
+  }
+  // Salta lo ya descargado (usa --force para re-descargar todo).
+  if (!force && existsSync(join(outDir, `${m.key}.glb`))) {
+    skipped++;
     continue;
   }
   try {
@@ -42,5 +50,5 @@ for (const m of manifest.models) {
   }
 }
 
-console.log(`\nListo: ${ok} descargados, ${failed.length} fallidos, ${pending.length} sin URL.`);
+console.log(`\nListo: ${ok} descargados, ${skipped} ya existían, ${failed.length} fallidos, ${pending.length} sin URL.`);
 if (pending.length) console.log(`Rellena la url en src/data/models.manifest.json para: ${pending.join(', ')}`);
