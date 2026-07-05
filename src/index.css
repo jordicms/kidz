@@ -814,6 +814,13 @@ body {
   pointer-events: auto;
 }
 
+.star-branch {
+  color: var(--accent2);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 /* ---------- Viajes guiados ---------- */
 .journey-overlay {
   position: absolute;

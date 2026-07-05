@@ -13,6 +13,7 @@ const fragmentShader = /* glsl */ `
   uniform float uRadius;
   uniform float uStrength;
   uniform float uAspect;
+  uniform float uRingGain;
 
   void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
     vec2 d = uv - uHole;
@@ -28,7 +29,12 @@ const fragmentShader = /* glsl */ `
     float g = texture(inputBuffer, clamp(uv - off, 0.0, 1.0)).g;
     float b = texture(inputBuffer, clamp(uv - off * 0.93, 0.0, 1.0)).b;
     float shadow = smoothstep(uRadius * 0.82, uRadius, dist);
-    outputColor = vec4(vec3(r, g, b) * shadow, 1.0);
+    vec3 col = vec3(r, g, b) * shadow;
+    // Anillo de fotones (Einstein): brillo intenso justo en el borde de sombra,
+    // que el bloom amplifica. Da el aro luminoso realista alrededor del horizonte.
+    float ring = exp(-pow((dist - uRadius * 0.93) / (uRadius * 0.1), 2.0));
+    col += vec3(1.0, 0.72, 0.38) * ring * uRingGain;
+    outputColor = vec4(col, 1.0);
   }
 `;
 
@@ -36,16 +42,18 @@ interface LensingOptions {
   radius?: number;
   strength?: number;
   aspect?: number;
+  ringGain?: number;
 }
 
 class LensingEffectImpl extends Effect {
-  constructor({ radius = 0.14, strength = 0.06, aspect = 1 }: LensingOptions = {}) {
+  constructor({ radius = 0.14, strength = 0.06, aspect = 1, ringGain = 0 }: LensingOptions = {}) {
     super('LensingEffect', fragmentShader, {
       uniforms: new Map<string, THREE.Uniform>([
         ['uHole', new THREE.Uniform(new THREE.Vector2(0.5, 0.5))],
         ['uRadius', new THREE.Uniform(radius)],
         ['uStrength', new THREE.Uniform(strength)],
         ['uAspect', new THREE.Uniform(aspect)],
+        ['uRingGain', new THREE.Uniform(ringGain)],
       ]),
     });
   }
