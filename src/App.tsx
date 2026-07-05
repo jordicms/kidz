@@ -15,6 +15,7 @@ const GalaxyScene = lazy(() => import('./scenes/GalaxyScene'));
 const UniverseScene = lazy(() => import('./scenes/UniverseScene'));
 const BlackHoleScene = lazy(() => import('./scenes/BlackHoleScene'));
 const StarLifeScene = lazy(() => import('./scenes/StarLifeScene'));
+const ConstellationsScene = lazy(() => import('./scenes/ConstellationsScene'));
 const DinoIslandScene = lazy(() => import('./scenes/DinoIslandScene'));
 const DinoScene = lazy(() => import('./scenes/DinoScene'));
 const BodyScene = lazy(() => import('./scenes/BodyScene'));
@@ -29,6 +30,7 @@ const TITLES = {
   universe: { title: '✨ El Universo', hint: 'Toca cada maravilla del cosmos' },
   blackhole: { title: '🕳️ Sagitario A*', hint: 'El agujero negro de la Vía Láctea' },
   starlife: { title: '🌟 Vida de las estrellas', hint: 'Del nacimiento al final' },
+  constellations: { title: '✨ Constelaciones', hint: 'Toca una para ver su figura' },
   'dino-island': { title: '🦖 La Isla de los Dinosaurios', hint: 'Toca un dinosaurio para conocerlo' },
   body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
   ocean: { title: '🐳 El Océano', hint: 'Baja hasta lo más profundo' },
@@ -44,6 +46,7 @@ const AMBIENT_BY_VIEW: Record<View, AmbientKind | null> = {
   universe: 'space',
   blackhole: 'space',
   starlife: 'space',
+  constellations: 'space',
   'dino-island': 'island',
   dino: 'island',
   body: 'body',
@@ -107,7 +110,7 @@ function SpeedButton() {
 
 function Hud() {
   const view = useApp((s) => s.view);
-  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openBody, openDeepSpace } = useApp();
+  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openBody, openDeepSpace, goConstellations } = useApp();
 
   if (view === 'home' || view === 'passport') return null;
 
@@ -118,6 +121,7 @@ function Hud() {
     : view === 'universe' ? goGalaxy
     : view === 'blackhole' ? goGalaxy
     : view === 'starlife' ? () => openBody('sol')
+    : view === 'constellations' ? goUniverse
     : view === 'dino' ? goDinoIsland
     : view === 'organ' ? goBody
     : view === 'journey' ? goBody
@@ -160,9 +164,14 @@ function Hud() {
           </>
         )}
         {view === 'universe' && (
-          <button className="btn" onClick={goHome}>
-            🏠 Inicio
-          </button>
+          <>
+            <button className="btn btn-accent" onClick={goConstellations}>
+              ✨ Constelaciones
+            </button>
+            <button className="btn" onClick={goHome}>
+              🏠 Inicio
+            </button>
+          </>
         )}
         {view === 'dino-island' && <DinoTimeline />}
       </div>
@@ -194,6 +203,7 @@ export default function App() {
         {view === 'universe' && <UniverseScene />}
         {view === 'blackhole' && <BlackHoleScene />}
         {view === 'starlife' && <StarLifeScene />}
+        {view === 'constellations' && <ConstellationsScene />}
         {view === 'dino-island' && <DinoIslandScene />}
         {view === 'dino' && <DinoScene />}
         {view === 'body' && <BodyScene />}

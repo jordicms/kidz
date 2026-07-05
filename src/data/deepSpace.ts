@@ -311,7 +311,28 @@ export const UNIVERSE_OBJECTS: DeepSpaceObject[] = [
   },
 ];
 
-export const ALL_DEEP_SPACE: DeepSpaceObject[] = [MILKY_WAY, SAGITTARIUS_A, ...UNIVERSE_OBJECTS];
+export const COMET: DeepSpaceObject = {
+  id: 'cometa',
+  name: 'El Cometa',
+  emoji: '☄️',
+  kind: 'nebulosa',
+  tagline: 'Una bola de hielo con una cola preciosa',
+  color: '#bfe3ff',
+  facts: [
+    { icon: '☃️', label: 'De qué es', value: 'Hielo, polvo y roca: una "bola de nieve sucia"' },
+    { icon: '🌬️', label: 'Su cola', value: 'Apunta siempre en contra del Sol' },
+    { icon: '☀️', label: 'Brilla', value: 'Al acercarse al Sol se calienta y suelta gas' },
+    { icon: '🔁', label: 'Vuelve', value: 'El de Halley pasa cada 76 años' },
+  ],
+  story: [
+    { emoji: '☄️', title: '¡Soy un cometa!', text: 'Soy como una bola de nieve sucia hecha de hielo, polvo y roca, que viaja por el sistema solar en una órbita muy alargada.' },
+    { emoji: '☀️', title: 'Mi cola mágica', text: 'Cuando me acerco al Sol, su calor derrite mi hielo y suelto gas y polvo que forman una cola larguísima y brillante.' },
+    { emoji: '🌬️', title: 'Siempre en contra del Sol', text: 'Mi cola no va detrás de mí: ¡el viento del Sol la empuja siempre hacia el lado contrario al Sol!' },
+    { emoji: '🔁', title: 'Nos vemos otra vez', text: 'Doy vueltas enormes y tardo años en volver. El cometa Halley visita la Tierra una vez cada 76 años.' },
+  ],
+};
+
+export const ALL_DEEP_SPACE: DeepSpaceObject[] = [MILKY_WAY, SAGITTARIUS_A, COMET, ...UNIVERSE_OBJECTS];
 
 export function getDeepSpaceObject(id: string): DeepSpaceObject | undefined {
   return ALL_DEEP_SPACE.find((o) => o.id === id);
