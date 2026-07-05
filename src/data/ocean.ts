@@ -165,6 +165,52 @@ export const CREATURES: SeaCreature[] = [
       { emoji: '🌑', title: 'Vida en el abismo', text: 'Aunque parezca imposible, en el fondo del mar vivimos muchos bichos con luces de colores. ¡Es como un cielo estrellado al revés!' },
     ],
   },
+  {
+    id: 'delfin',
+    name: 'El Delfín',
+    emoji: '🐬',
+    tagline: 'El acróbata más listo del mar',
+    zone: 'sol',
+    depthM: 12,
+    color: '#8fa6b6',
+    color2: '#eef4f8',
+    shape: 'whale',
+    scene: { scale: 0.85, radius: 8, speed: 0.55, phase: 1.8 },
+    facts: [
+      { icon: '🧠', label: 'Muy listo', value: 'De los animales más inteligentes' },
+      { icon: '🔊', label: 'Sonar', value: 'Ve con el oído lanzando chasquidos (ecolocalización)' },
+      { icon: '🤸', label: 'Saltarín', value: 'Salta y hace piruetas fuera del agua' },
+      { icon: '👨‍👩‍👧', label: 'En grupo', value: 'Vive en familias que se ayudan' },
+    ],
+    story: [
+      { emoji: '🐬', title: '¡Soy el delfín!', text: 'Soy un mamífero muy listo y juguetón. Respiro aire por un agujero en lo alto de mi cabeza.' },
+      { emoji: '🔊', title: 'Veo con sonidos', text: 'Lanzo chasquidos que rebotan en las cosas y vuelven a mí. ¡Así "veo" con el oído, incluso en agua turbia!' },
+      { emoji: '🤸', title: 'Acróbata', text: 'Me encanta saltar, dar volteretas y nadar junto a los barcos. ¡Vivo en grupo y nos cuidamos entre todos!' },
+    ],
+  },
+  {
+    id: 'orca',
+    name: 'La Orca',
+    emoji: '🐋',
+    tagline: 'La cazadora en equipo (¡no es una ballena!)',
+    zone: 'sol',
+    depthM: 30,
+    color: '#1a1c22',
+    color2: '#ffffff',
+    shape: 'whale',
+    scene: { scale: 1.2, radius: 10.5, speed: -0.3, phase: 4.8 },
+    facts: [
+      { icon: '🐬', label: 'Sorpresa', value: '¡Es el delfín más grande, no una ballena!' },
+      { icon: '👨‍👩‍👧‍👦', label: 'Familia', value: 'Vive en manadas mandadas por la abuela' },
+      { icon: '🧠', label: 'Estrategia', value: 'Cazan en equipo con trucos que se enseñan' },
+      { icon: '⚫', label: 'Colores', value: 'Blanco y negro inconfundible' },
+    ],
+    story: [
+      { emoji: '🐋', title: '¡Soy la orca!', text: 'Aunque me llaman "ballena asesina", en realidad soy el delfín más grande del mundo. ¡Blanca y negra!' },
+      { emoji: '👨‍👩‍👧‍👦', title: 'Mi familia', text: 'Vivo toda la vida con mi familia, mandada por la abuela más sabia. Hablamos con sonidos propios de cada grupo.' },
+      { emoji: '🧠', title: 'Cazadora lista', text: 'Cazamos en equipo con trucos muy ingeniosos que las mayores enseñan a las crías. ¡Somos muy inteligentes!' },
+    ],
+  },
 ];
 
 export function getCreature(id: string): SeaCreature | undefined {

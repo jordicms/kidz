@@ -273,6 +273,42 @@ export const UNIVERSE_OBJECTS: DeepSpaceObject[] = [
       },
     ],
   },
+  {
+    id: 'cumulo-globular',
+    name: 'Cúmulo globular',
+    emoji: '🔮',
+    kind: 'cúmulo',
+    tagline: 'Una bola de cientos de miles de estrellas',
+    color: '#ffe6b0',
+    facts: [
+      { icon: '⭐', label: 'Estrellas', value: 'Cientos de miles, muy juntitas' },
+      { icon: '⏳', label: 'Edad', value: 'De las cosas más antiguas: ~12.000 millones de años' },
+      { icon: '🔵', label: 'Forma', value: 'Una pelota casi perfecta' },
+    ],
+    story: [
+      { emoji: '🔮', title: '¡Soy un cúmulo globular!', text: 'Soy una bola gigante de cientos de miles de estrellas muy apretadas, girando juntas por la gravedad.' },
+      { emoji: '⏳', title: 'Estrellas abuelas', text: 'Mis estrellas son de las más viejas del universo, ¡casi tan antiguas como el propio cosmos!' },
+      { emoji: '🌃', title: 'Un cielo lleno', text: 'Si vivieras en un planeta dentro de mí, tu cielo nocturno tendría miles de estrellas brillantes, ¡nunca sería del todo de noche!' },
+    ],
+  },
+  {
+    id: 'aguila',
+    name: 'Nebulosa del Águila',
+    emoji: '🦅',
+    kind: 'nebulosa',
+    tagline: 'Los famosos "Pilares de la Creación"',
+    color: '#b7d98a',
+    facts: [
+      { icon: '🏛️', label: 'Pilares', value: 'Columnas de gas de años luz de altas' },
+      { icon: '👶', label: 'Fábrica', value: 'Dentro nacen estrellas nuevas' },
+      { icon: '🔭', label: 'Famosa', value: 'La retrató el telescopio Hubble' },
+    ],
+    story: [
+      { emoji: '🏛️', title: 'Los Pilares de la Creación', text: 'Soy famosa por tres columnas gigantes de gas y polvo, tan altas que la luz tarda años en recorrerlas.' },
+      { emoji: '👶', title: 'Cuna de estrellas', text: 'Dentro de mis pilares, el gas se junta y nacen estrellas nuevas, como huevos a punto de romperse.' },
+      { emoji: '🔭', title: 'Una foto famosa', text: 'El telescopio Hubble me hizo una foto tan bonita que se ha hecho famosa en todo el mundo.' },
+    ],
+  },
 ];
 
 export const ALL_DEEP_SPACE: DeepSpaceObject[] = [MILKY_WAY, SAGITTARIUS_A, ...UNIVERSE_OBJECTS];
