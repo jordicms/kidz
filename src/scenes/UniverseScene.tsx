@@ -399,8 +399,52 @@ function BackgroundWisps() {
   );
 }
 
+/** Cúmulo globular: bola densa de miles de estrellas con núcleo brillante. */
+function GlobularCluster() {
+  const ref = useRef<THREE.Points>(null);
+  const star = useMemo(() => createGlowTexture('glob-star', 'rgba(255,240,210,1)'), []);
+  const positions = useMemo(() => {
+    const n = 2600;
+    const p = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      // Concentración hacia el centro (potencia alta = más denso dentro).
+      const r = Math.pow(Math.random(), 2.2) * 2.6;
+      const u = Math.random() * 2 - 1;
+      const t = Math.random() * Math.PI * 2;
+      const s = Math.sqrt(1 - u * u);
+      p[i * 3] = Math.cos(t) * s * r;
+      p[i * 3 + 1] = u * r;
+      p[i * 3 + 2] = Math.sin(t) * s * r;
+    }
+    return p;
+  }, []);
+  useFrame((_, d) => {
+    if (ref.current) ref.current.rotation.y += d * 0.06;
+  });
+  return (
+    <group>
+      <points ref={ref}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial map={star} size={0.11} sizeAttenuation transparent opacity={0.95} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} color="#ffe6b0" />
+      </points>
+      <GlowSprite textureKey="glob-core" color="rgba(255,235,190,0.9)" scale={2.4} opacity={0.8} />
+    </group>
+  );
+}
+
 const VISUALS: Record<string, ReactNode> = {
   andromeda: <AndromedaVisual />,
+  'cumulo-globular': <GlobularCluster />,
+  aguila: (
+    <Nebula
+      id="aguila"
+      colors={['rgba(150,200,110,0.8)', 'rgba(120,150,90,0.75)', 'rgba(200,180,120,0.6)']}
+      filaments={14}
+      stars={3}
+    />
+  ),
   orion: (
     <Nebula id="orion" colors={['rgba(255,110,199,0.85)', 'rgba(170,90,255,0.8)', 'rgba(90,140,255,0.75)']} stars={4} />
   ),
