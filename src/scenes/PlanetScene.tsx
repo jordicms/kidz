@@ -76,6 +76,7 @@ function DetailMoon({ moon, scale }: { moon: Moon; scale: number }) {
 export default function PlanetScene() {
   const bodyId = useApp((s) => s.bodyId);
   const quality = useApp((s) => s.quality);
+  const goStarLife = useApp((s) => s.goStarLife);
   const [interior, setInterior] = useState(false);
   const body = bodyId ? getBody(bodyId) : undefined;
   if (!body) return null;
@@ -129,6 +130,11 @@ export default function PlanetScene() {
           <button className="btn btn-accent" onClick={() => setInterior(!interior)}>
             {interior ? '🌍 Ver por fuera' : '🔬 Ver el interior'}
           </button>
+          {isSun && (
+            <button className="btn" onClick={goStarLife}>
+              🌟 Vida de las estrellas
+            </button>
+          )}
         </div>
       </div>
 

@@ -14,6 +14,7 @@ const PlanetScene = lazy(() => import('./scenes/PlanetScene'));
 const GalaxyScene = lazy(() => import('./scenes/GalaxyScene'));
 const UniverseScene = lazy(() => import('./scenes/UniverseScene'));
 const BlackHoleScene = lazy(() => import('./scenes/BlackHoleScene'));
+const StarLifeScene = lazy(() => import('./scenes/StarLifeScene'));
 const DinoIslandScene = lazy(() => import('./scenes/DinoIslandScene'));
 const DinoScene = lazy(() => import('./scenes/DinoScene'));
 const BodyScene = lazy(() => import('./scenes/BodyScene'));
@@ -27,6 +28,7 @@ const TITLES = {
   galaxy: { title: '🌌 La Vía Láctea', hint: 'Nuestra galaxia, vista desde fuera' },
   universe: { title: '✨ El Universo', hint: 'Toca cada maravilla del cosmos' },
   blackhole: { title: '🕳️ Sagitario A*', hint: 'El agujero negro de la Vía Láctea' },
+  starlife: { title: '🌟 Vida de las estrellas', hint: 'Del nacimiento al final' },
   'dino-island': { title: '🦖 La Isla de los Dinosaurios', hint: 'Toca un dinosaurio para conocerlo' },
   body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
   ocean: { title: '🐳 El Océano', hint: 'Baja hasta lo más profundo' },
@@ -41,6 +43,7 @@ const AMBIENT_BY_VIEW: Record<View, AmbientKind | null> = {
   galaxy: 'space',
   universe: 'space',
   blackhole: 'space',
+  starlife: 'space',
   'dino-island': 'island',
   dino: 'island',
   body: 'body',
@@ -104,7 +107,7 @@ function SpeedButton() {
 
 function Hud() {
   const view = useApp((s) => s.view);
-  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openDeepSpace } = useApp();
+  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openBody, openDeepSpace } = useApp();
 
   if (view === 'home' || view === 'passport') return null;
 
@@ -114,6 +117,7 @@ function Hud() {
     : view === 'galaxy' ? goSolar
     : view === 'universe' ? goGalaxy
     : view === 'blackhole' ? goGalaxy
+    : view === 'starlife' ? () => openBody('sol')
     : view === 'dino' ? goDinoIsland
     : view === 'organ' ? goBody
     : view === 'journey' ? goBody
@@ -189,6 +193,7 @@ export default function App() {
         {view === 'galaxy' && <GalaxyScene />}
         {view === 'universe' && <UniverseScene />}
         {view === 'blackhole' && <BlackHoleScene />}
+        {view === 'starlife' && <StarLifeScene />}
         {view === 'dino-island' && <DinoIslandScene />}
         {view === 'dino' && <DinoScene />}
         {view === 'body' && <BodyScene />}

@@ -2,8 +2,9 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette, ToneMapping, ChromaticAberration } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
+import * as PP from 'postprocessing';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
@@ -17,9 +18,10 @@ function BlackHoleEffects() {
   if (!quality.postprocessing) return null;
   return (
     <EffectComposer multisampling={quality.antialias ? 4 : 0}>
-      <Lensing radius={0.2} strength={0.14} aspect={size.width / size.height} />
-      <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
-      <Vignette eskil={false} offset={0.25} darkness={0.75} />
+      <Lensing radius={0.2} strength={0.14} ringGain={2.6} aspect={size.width / size.height} />
+      <Bloom intensity={quality.bloomIntensity * 1.7} luminanceThreshold={0.35} luminanceSmoothing={0.3} mipmapBlur radius={0.85} />
+      <ChromaticAberration offset={[0.0012, 0.0012]} radialModulation modulationOffset={0.6} blendFunction={PP.BlendFunction.NORMAL} />
+      <Vignette eskil={false} offset={0.22} darkness={0.8} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );
@@ -48,11 +50,12 @@ function AccretionDisk() {
       const ang = Math.atan2(y, x);
       uv.setXY(i, (r - DISK_INNER) / (DISK_OUTER - DISK_INNER), (ang + Math.PI) / (Math.PI * 2));
       // Doppler relativista: el lado que se acerca es más brillante Y más azul.
+      // Colores en HDR (>1) para que el bloom irradie con fuerza.
       const d = 0.5 + 0.5 * Math.cos(ang);
-      const b = 0.4 + 1.35 * d;
+      const b = 0.5 + 2.4 * d;
       colors[i * 3] = b;
-      colors[i * 3 + 1] = b * (0.8 + 0.2 * d);
-      colors[i * 3 + 2] = b * (0.55 + 0.5 * d);
+      colors[i * 3 + 1] = b * (0.78 + 0.22 * d);
+      colors[i * 3 + 2] = b * (0.5 + 0.55 * d);
     }
     uv.needsUpdate = true;
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
