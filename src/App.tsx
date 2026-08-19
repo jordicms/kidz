@@ -24,6 +24,8 @@ const OrganScene = lazy(() => import('./scenes/OrganScene'));
 const JourneyScene = lazy(() => import('./scenes/JourneyScene'));
 const OceanScene = lazy(() => import('./scenes/OceanScene'));
 const SeaCreatureScene = lazy(() => import('./scenes/SeaCreatureScene'));
+const MicroScene = lazy(() => import('./scenes/MicroScene'));
+const MicrobeScene = lazy(() => import('./scenes/MicrobeScene'));
 
 const TITLES = {
   solar: { title: '🪐 El Sistema Solar', hint: 'Toca un planeta para conocerlo' },
@@ -36,6 +38,7 @@ const TITLES = {
   dig: { title: '⛏️ Excavación de fósiles', hint: 'Desentierra y monta el esqueleto' },
   body: { title: '🫀 El Cuerpo Humano', hint: 'Pela las capas y toca un órgano' },
   ocean: { title: '🐳 El Océano', hint: 'Baja hasta lo más profundo' },
+  micro: { title: '🔬 El Mundo Microscópico', hint: 'Aumenta el zoom y toca lo que veas' },
 } as const;
 
 /** Ambiente sonoro por vista (null = silencio). */
@@ -57,6 +60,8 @@ const AMBIENT_BY_VIEW: Record<View, AmbientKind | null> = {
   journey: 'body',
   ocean: 'ocean',
   sea: 'ocean',
+  micro: 'micro',
+  microbe: 'micro',
 };
 
 function AmbientAudio() {
@@ -113,11 +118,12 @@ function SpeedButton() {
 
 function Hud() {
   const view = useApp((s) => s.view);
-  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, openBody, openDeepSpace, goConstellations, goDig } = useApp();
+  const { goHome, goSolar, goGalaxy, goUniverse, goDinoIsland, goBody, goOcean, goMicro, openBody, openDeepSpace, goConstellations, goDig } = useApp();
 
   if (view === 'home' || view === 'passport') return null;
 
-  const isDetail = view === 'planet' || view === 'dino' || view === 'organ' || view === 'journey' || view === 'sea';
+  const isDetail =
+    view === 'planet' || view === 'dino' || view === 'organ' || view === 'journey' || view === 'sea' || view === 'microbe';
   const back =
     view === 'planet' ? goSolar
     : view === 'galaxy' ? goSolar
@@ -130,6 +136,7 @@ function Hud() {
     : view === 'organ' ? goBody
     : view === 'journey' ? goBody
     : view === 'sea' ? goOcean
+    : view === 'microbe' ? goMicro
     : goHome;
   const showSpeed = view === 'solar' || view === 'dino-island';
 
@@ -223,6 +230,8 @@ export default function App() {
         {view === 'journey' && <JourneyScene />}
         {view === 'ocean' && <OceanScene />}
         {view === 'sea' && <SeaCreatureScene />}
+        {view === 'micro' && <MicroScene />}
+        {view === 'microbe' && <MicrobeScene />}
       </Suspense>
       <Hud />
       <DeepSpaceStory />

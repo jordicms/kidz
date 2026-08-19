@@ -24,6 +24,8 @@ export type View =
   | 'journey'
   | 'ocean'
   | 'sea'
+  | 'micro'
+  | 'microbe'
   | 'passport';
 
 interface AppState {
@@ -38,6 +40,8 @@ interface AppState {
   journeyId: string | null;
   /** Criatura marina seleccionada (vista ficha). */
   seaId: string | null;
+  /** Microbio seleccionado (vista ficha). */
+  microbeId: string | null;
   /** Objeto de espacio profundo con su historia abierta. */
   deepSpaceId: string | null;
   /** Multiplicador de velocidad de la simulación. */
@@ -63,6 +67,8 @@ interface AppState {
   goJourney: (id: string) => void;
   goOcean: () => void;
   openSea: (id: string) => void;
+  goMicro: () => void;
+  openMicrobe: (id: string) => void;
   goPassport: () => void;
   openBody: (id: string) => void;
   openDeepSpace: (id: string) => void;
@@ -114,13 +120,14 @@ export const useApp = create<AppState>((set) => ({
   organId: null,
   journeyId: null,
   seaId: null,
+  microbeId: null,
   deepSpaceId: null,
   speed: 1,
   quality: detectPreset(),
   muted: initialMuted,
   visited: loadVisited(),
   goHome: () =>
-    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, deepSpaceId: null }),
+    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, microbeId: null, deepSpaceId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),
   goGalaxy: () => set({ view: 'galaxy', bodyId: null, deepSpaceId: null }),
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
@@ -135,6 +142,8 @@ export const useApp = create<AppState>((set) => ({
   goJourney: (id) => set((s) => ({ view: 'journey', journeyId: id, visited: visit(s.visited, `viaje:${id}`) })),
   goOcean: () => set({ view: 'ocean', seaId: null, deepSpaceId: null }),
   openSea: (id) => set((s) => ({ view: 'sea', seaId: id, visited: visit(s.visited, `mar:${id}`) })),
+  goMicro: () => set({ view: 'micro', microbeId: null, deepSpaceId: null }),
+  openMicrobe: (id) => set((s) => ({ view: 'microbe', microbeId: id, visited: visit(s.visited, `micro:${id}`) })),
   goPassport: () => set({ view: 'passport' }),
   openBody: (id) => set((s) => ({ view: 'planet', bodyId: id, visited: visit(s.visited, `astro:${id}`) })),
   openDeepSpace: (id) => set((s) => ({ deepSpaceId: id, visited: visit(s.visited, `deep:${id}`) })),
