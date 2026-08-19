@@ -604,6 +604,69 @@ body {
   max-width: 90%;
 }
 
+/* ---------- Mundo microscópico ---------- */
+/* Máscara del ocular: oscurece las esquinas como al mirar por un microscopio. */
+.micro-eyepiece {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 46%,
+    rgba(0, 0, 0, 0) 42%,
+    rgba(3, 8, 16, 0.45) 66%,
+    rgba(2, 5, 12, 0.88) 88%
+  );
+}
+
+/* Barra de escala, como en las microfotografías reales. */
+.micro-scalebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 10, 26, 0.72);
+  border: 2px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  pointer-events: auto;
+}
+
+.micro-scalebar .micro-bar {
+  display: block;
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* Tarjeta de tamaño en la ficha del microbio. */
+.micro-size {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+
+.micro-size-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+
+.micro-size-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
 /* ---------- Selector de eras (isla de dinosaurios) ---------- */
 .era-selector {
   position: absolute;

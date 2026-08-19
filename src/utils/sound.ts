@@ -201,7 +201,7 @@ export function playWhoosh(): void {
 /* Ambientes por escena (drones y texturas suaves, todo sintetizado)   */
 /* ------------------------------------------------------------------ */
 
-export type AmbientKind = 'space' | 'island' | 'body' | 'ocean';
+export type AmbientKind = 'space' | 'island' | 'body' | 'ocean' | 'micro';
 
 let ambient: { kind: AmbientKind; stops: (() => void)[]; gain: GainNode } | null = null;
 
@@ -324,6 +324,27 @@ export function startAmbient(kind: AmbientKind): void {
     const t = window.setInterval(() => {
       if (Math.random() < 0.75) birdChirp(ac, gain);
     }, 3200);
+    stops.push(() => window.clearInterval(t));
+  } else if (kind === 'micro') {
+    // Mundo microscópico: un zumbido suave (como el motor del microscopio)
+    // con un brillo agudo y "ticks" sueltos, como partículas chocando.
+    stops.push(drone(ac, gain, 98, 0.03, 0.09));
+    stops.push(drone(ac, gain, 147, 0.014, 0.13));
+    const t = window.setInterval(() => {
+      if (Math.random() < 0.6) {
+        const now = ac.currentTime;
+        const o = ac.createOscillator();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(1800 + Math.random() * 1400, now);
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.03, now + 0.008);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+        o.connect(g).connect(gain);
+        o.start(now);
+        o.stop(now + 0.1);
+      }
+    }, 700);
     stops.push(() => window.clearInterval(t));
   } else if (kind === 'body') {
     stops.push(drone(ac, gain, 68, 0.028, 0.07));
