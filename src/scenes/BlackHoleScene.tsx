@@ -1,13 +1,14 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, ToneMapping, ChromaticAberration } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import * as PP from 'postprocessing';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import { Lensing } from '../components/three/Lensing';
 import { AdaptiveQuality, IntroFly, SpaceBackground } from '../components/three/SceneExtras';
 
@@ -200,9 +201,8 @@ export default function BlackHoleScene() {
         <Stars radius={120} depth={60} count={scaleCount(3000, quality, 800)} factor={4} saturation={0.3} fade speed={0.4} />
         <ambientLight intensity={0.2} />
         <BlackHole />
-        <OrbitControls
+        <Controls
           ref={controlsRef as never}
-          enablePan={false}
           minDistance={5}
           maxDistance={30}
           autoRotate

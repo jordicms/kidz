@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import SunSurface from '../components/three/SunSurface';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
@@ -245,7 +246,7 @@ export default function StarLifeScene() {
           <group key={stage.id}>
             <StageVisual id={stage.id} />
           </group>
-          <OrbitControls enablePan={false} minDistance={4} maxDistance={16} autoRotate autoRotateSpeed={0.3} />
+          <Controls minDistance={4} maxDistance={16} autoRotate autoRotateSpeed={0.3} />
           <AdaptiveQuality />
           <Effects />
         </Canvas>

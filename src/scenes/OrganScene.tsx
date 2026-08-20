@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+
 import { getOrgan, SYSTEMS } from '../data/body';
 import type { Organ } from '../data/types';
 import { useApp } from '../state/store';
 import { playHeartbeat } from '../utils/sound';
+import Controls from '../components/three/Controls';
 import OrganModel from '../components/three/OrganModel';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
@@ -53,7 +54,7 @@ export default function OrganScene() {
             <directionalLight position={[4, 5, 4]} intensity={2.2} color="#fff2f4" />
             <ambientLight intensity={0.4} />
             <Turntable organ={organ} />
-            <OrbitControls enablePan={false} minDistance={2.5} maxDistance={8} target={[0, 0.1, 0]} />
+            <Controls minDistance={2.5} maxDistance={8} target={[0, 0.1, 0]} />
             <AdaptiveQuality />
             <Effects />
           </Canvas>

@@ -52,6 +52,9 @@ interface AppState {
   muted: boolean;
   /** Pasaporte del explorador: claves visitadas (persistente). */
   visited: Record<string, true>;
+  /** Contador que, al subir, hace que los controles vuelvan a la vista inicial. */
+  viewResetNonce: number;
+  resetView: () => void;
   goHome: () => void;
   goSolar: () => void;
   goGalaxy: () => void;
@@ -126,6 +129,8 @@ export const useApp = create<AppState>((set) => ({
   quality: detectPreset(),
   muted: initialMuted,
   visited: loadVisited(),
+  viewResetNonce: 0,
+  resetView: () => set((s) => ({ viewResetNonce: s.viewResetNonce + 1 })),
   goHome: () =>
     set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, microbeId: null, deepSpaceId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),

@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Stars } from '@react-three/drei';
 import { UNIVERSE_OBJECTS } from '../data/deepSpace';
 import type { DeepSpaceObject } from '../data/types';
 import { useApp } from '../state/store';
@@ -12,6 +12,7 @@ import {
   createGlowTexture,
   createSpiralHazeTexture,
 } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, IntroFly, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 import { GalaxyPoints } from './GalaxyScene';
@@ -527,9 +528,8 @@ export default function UniverseScene() {
           );
         })}
         <ShootingStars count={3} radius={60} />
-        <OrbitControls
+        <Controls
           ref={controlsRef as never}
-          enablePan={false}
           minDistance={8}
           maxDistance={45}
           autoRotate

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
-import { Line, OrbitControls, Stars } from '@react-three/drei';
+import { Line, Stars } from '@react-three/drei';
 import { CONSTELLATIONS, type Constellation } from '../data/constellations';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createFlareTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
 import { speak, stopSpeaking } from '../utils/speech';
@@ -61,7 +62,7 @@ export default function ConstellationsScene() {
           {CONSTELLATIONS.map((con, i) => (
             <ConstellationStars key={con.id} c={con} active={i === sel} onSelect={() => setSel(i)} />
           ))}
-          <OrbitControls enablePan={false} enableZoom={false} rotateSpeed={-0.35} autoRotate autoRotateSpeed={0.15} />
+          <Controls enableZoom={false} rotateSpeed={-0.35} autoRotate autoRotateSpeed={0.15} />
           <AdaptiveQuality />
           <Effects />
         </Canvas>

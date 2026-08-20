@@ -1,10 +1,11 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Stars } from '@react-three/drei';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createGlowTexture, createSpiralHazeTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, IntroFly, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
 
@@ -231,7 +232,7 @@ export default function GalaxyScene() {
         <BlackHole />
         <SunMarker />
         <ShootingStars count={2} radius={90} />
-        <OrbitControls ref={controlsRef as never} enablePan={false} minDistance={6} maxDistance={70} />
+        <Controls ref={controlsRef as never} minDistance={6} maxDistance={70} />
         <IntroFly from={[0, 46, 78]} to={[0, 16, 26]} duration={2.6} controls={controlsRef} />
         <AdaptiveQuality />
         <Effects />
