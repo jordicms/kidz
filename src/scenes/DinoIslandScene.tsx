@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls, Sky } from '@react-three/drei';
+import { Html, Sky } from '@react-three/drei';
 import { DINOS, ERA_COLORS, type Dino, type DinoEra } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
 import { createGlowTexture } from '../utils/textures';
 import { usePBR } from '../utils/pbr';
+import Controls from '../components/three/Controls';
 import DinoModel from '../components/three/DinoModel';
 import { AdaptiveQuality, IntroFly } from '../components/three/SceneExtras';
 import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
@@ -272,7 +273,16 @@ function DinoVisual({ dino, moving, shadow = true }: { dino: Dino; moving: boole
       >
         <DinoModel dino={dino} moving={moving} />
       </group>
-      <Html center position={[0, dino.heightM * dino.scene.scale + 0.8, 0]} zIndexRange={[5, 0]}>
+      {/* `distanceFactor` hace que la etiqueta se empequeñezca con la distancia,
+          como si estuviera en la escena. En la isla hay 15 dinosaurios y, con
+          etiquetas de tamaño fijo, en una pantalla estrecha se amontonaban
+          unas sobre otras hasta ser ilegibles. */}
+      <Html
+        center
+        position={[0, dino.heightM * dino.scene.scale + 0.8, 0]}
+        zIndexRange={[5, 0]}
+        distanceFactor={26}
+      >
         <div className="body-label" onClick={tap}>
           <span className="chip">
             {dino.emoji} {dino.name.split(' ')[0]}
@@ -945,9 +955,8 @@ export default function DinoIslandScene() {
           {shownDinos.map((d) => (
             <DinoActor key={d.id} dino={d} registry={registry} />
           ))}
-          <OrbitControls
+          <Controls
             ref={controlsRef as never}
-            enablePan={false}
             minDistance={10}
             maxDistance={50}
             maxPolarAngle={Math.PI * 0.49}

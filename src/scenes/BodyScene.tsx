@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { BODY_LAYERS, SYSTEMS, INNER_ORGAN_IDS, JOURNEYS, getOrgan } from '../data/body';
 import { useApp } from '../state/store';
 import { playHeartbeat } from '../utils/sound';
+import Controls from '../components/three/Controls';
 import OrganModel from '../components/three/OrganModel';
 import { HumanForm, Skeleton, Circulatory, NervousNet } from '../components/three/Anatomy';
 import GltfModel from '../components/three/GltfModel';
@@ -181,7 +182,7 @@ export default function BodyScene() {
           <group position={[0, 0.15, 0]}>
             <BodyContent layer={layer} system={system} />
           </group>
-          <OrbitControls enablePan={false} minDistance={3.2} maxDistance={9} target={[0, 0.25, 0]} maxPolarAngle={Math.PI * 0.92} />
+          <Controls minDistance={3.2} maxDistance={9} target={[0, 0.25, 0]} maxPolarAngle={Math.PI * 0.92} />
           <AdaptiveQuality />
           <Effects />
         </Canvas>

@@ -70,6 +70,12 @@ body {
   pointer-events: auto;
 }
 
+.hud-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
 .hud-bottom {
   display: flex;
   justify-content: center;
@@ -1126,5 +1132,66 @@ body {
     border-left: none;
     border-top: 2px solid var(--panel-border);
     border-radius: var(--radius) var(--radius) 0 0;
+  }
+}
+
+/* ---------- Móvil en vertical ----------
+   En vertical el HUD se come mucha pantalla y los overlays se pisaban entre
+   ellos (el selector de eras tapaba el título). Aquí se compacta todo. */
+@media (max-width: 560px) {
+  .view-title {
+    font-size: 14px;
+    padding: 6px 10px;
+    max-width: 46vw;
+  }
+  .view-title small {
+    font-size: 10px;
+  }
+  .hud-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .hud-actions .btn {
+    font-size: 13px;
+    padding: 7px 11px;
+  }
+  .hud-actions .btn-round {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+  .view-title {
+    max-width: 42vw;
+  }
+  /* El selector de eras baja por debajo de la barra superior. */
+  .era-selector {
+    top: calc(104px + env(safe-area-inset-top));
+  }
+  .era-selector .chip-btn {
+    font-size: 11px;
+    padding: 4px 9px;
+  }
+  /* Controles inferiores más compactos, para dejar ver la escena. */
+  .ocean-controls,
+  .body-controls,
+  .bh-overlay {
+    gap: 6px;
+  }
+  .ocean-controls .control-hint,
+  .body-controls .control-hint {
+    font-size: 11px;
+  }
+  .dino-timeline {
+    font-size: 11px;
+  }
+}
+
+/* Pantallas muy bajas (móvil en horizontal): el HUD debe estorbar lo mínimo. */
+@media (max-height: 460px) {
+  .view-title small {
+    display: none;
+  }
+  .era-selector {
+    top: calc(54px + env(safe-area-inset-top));
   }
 }

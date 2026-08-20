@@ -1,9 +1,10 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+
 import { getMicrobe, KIND_COLORS, type Microbe } from '../data/micro';
 import { useApp } from '../state/store';
+import Controls from '../components/three/Controls';
 import MicrobeModel from '../components/three/MicrobeModel';
 import Studio from '../components/three/Studio';
 import Effects from '../components/three/Effects';
@@ -52,7 +53,7 @@ export default function MicrobeScene() {
             {/* Contraluz del color del tipo de ser, para separarlo del fondo */}
             <pointLight position={[0, 0, -6]} intensity={26} color={kindColor} distance={22} decay={2} />
             <Turntable microbe={microbe} />
-            <OrbitControls enablePan={false} minDistance={3.2} maxDistance={11} target={[0, 0, 0]} />
+            <Controls minDistance={3.2} maxDistance={11} target={[0, 0, 0]} />
             <AdaptiveQuality />
             <Effects ao bloomThreshold={0.6} />
           </Canvas>

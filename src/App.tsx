@@ -76,6 +76,17 @@ function AmbientAudio() {
   return null;
 }
 
+/** Devuelve la cámara a su posición inicial: red de seguridad para que nadie
+ *  se quede perdido después de girar o desplazar la vista. */
+function RecenterButton() {
+  const resetView = useApp((s) => s.resetView);
+  return (
+    <button className="btn btn-round" onClick={resetView} title="Recentrar la vista">
+      🎯
+    </button>
+  );
+}
+
 function MuteButton() {
   const muted = useApp((s) => s.muted);
   const toggleMuted = useApp((s) => s.toggleMuted);
@@ -152,8 +163,9 @@ function Hud() {
             <small>{TITLES[view as keyof typeof TITLES].hint}</small>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="hud-actions">
           {showSpeed && <SpeedButton />}
+          <RecenterButton />
           <MuteButton />
         </div>
       </div>

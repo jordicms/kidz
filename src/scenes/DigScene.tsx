@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { FOSSILS } from '../data/fossils';
 import { ERA_COLORS } from '../data/dinos';
 import { useApp } from '../state/store';
 import { createGlowTexture } from '../utils/textures';
 import { playDig, playPop, playFanfare, playRoar } from '../utils/sound';
 import { speak, stopSpeaking } from '../utils/speech';
+import Controls from '../components/three/Controls';
 import { BonePiece } from '../components/three/Skeleton';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
@@ -309,7 +310,7 @@ export default function DigScene() {
             <BuildPhase key={sel} fossilIndex={sel} onDone={() => setPhase('done')} />
           )}
 
-          <OrbitControls enablePan={false} minDistance={5} maxDistance={16} maxPolarAngle={Math.PI * 0.49} target={[0, 1.6, 0]} />
+          <Controls minDistance={5} maxDistance={16} maxPolarAngle={Math.PI * 0.49} target={[0, 1.6, 0]} />
           <AdaptiveQuality />
           <Effects />
         </Canvas>

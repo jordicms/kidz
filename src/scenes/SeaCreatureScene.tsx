@@ -1,10 +1,11 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+
 import { getCreature, ZONES } from '../data/ocean';
 import type { SeaCreature } from '../data/ocean';
 import { useApp } from '../state/store';
+import Controls from '../components/three/Controls';
 import SeaCreatureModel from '../components/three/SeaCreatureModel';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
@@ -45,7 +46,7 @@ export default function SeaCreatureScene() {
             <directionalLight position={[5, 7, 4]} intensity={creature.zone === 'abismo' ? 0.5 : 1.8} color="#dff2ff" />
             <ambientLight intensity={creature.zone === 'abismo' ? 0.15 : 0.35} />
             <Turntable creature={creature} />
-            <OrbitControls enablePan={false} minDistance={3} maxDistance={10} target={[0, 0, 0]} />
+            <Controls minDistance={3} maxDistance={10} target={[0, 0, 0]} />
             <AdaptiveQuality />
             <Effects />
           </Canvas>

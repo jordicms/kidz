@@ -1,21 +1,27 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import { SCALES, KIND_COLORS, microbesAtScale, type Microbe, type MicroScale } from '../data/micro';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createGlowTexture } from '../utils/textures';
 import { speak, stopSpeaking } from '../utils/speech';
+import Controls, { visibleSizeAt } from '../components/three/Controls';
 import MicrobeModel from '../components/three/MicrobeModel';
 import Studio from '../components/three/Studio';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
 
-/** Espacio disponible en la escena (ancho × alto) donde debe caber todo. */
-const VIEW_W = 12.5;
-const VIEW_H = 5.8;
+/** Anchura de referencia del campo de visión, en unidades de escena. Solo se
+ *  usa para convertir micrómetros en unidades; el encaje real en pantalla lo
+ *  calcula <Ladder/> a partir del viewport. */
+const FIELD = 12.5;
+
+/** Cámara de la escena. El encaje en pantalla se calcula con estos valores,
+ *  no preguntando al viewport (que no refleja el fov corregido). */
+const CAM_DIST = 11;
+const CAM_FOV = 50;
 
 /**
  * Cuánto ocupa de verdad cada modelo respecto a su tamaño nominal.
@@ -45,21 +51,32 @@ interface Placed {
   microbe: Microbe;
   /** Diámetro en unidades de escena ANTES de ajustar al encuadre. */
   size: number;
-  position: [number, number, number];
+  /** Posición a lo largo del eje largo de la pantalla. */
+  main: number;
+  /** Desvío en el eje corto (para que las etiquetas no choquen). */
+  cross: number;
+  depth: number;
 }
 
 /**
- * Coloca los microbios en fila, de mayor a menor, sin solaparse, y calcula
- * cuánto hay que reducir el conjunto para que quepa en pantalla.
+ * Coloca los microbios en fila, de mayor a menor y sin solaparse.
+ *
+ * Las posiciones se dan en un eje "largo" abstracto: <Ladder/> lo orienta
+ * luego en horizontal o en vertical según cómo esté la pantalla. Así, en un
+ * móvil en vertical la escalera de tamaños baja por la pantalla en vez de
+ * salirse por los lados.
  *
  * Lo importante: los tamaños son proporcionales a los REALES, así que al
  * verlos juntos se aprecia de verdad que una bacteria es diez veces menor
  * que un glóbulo rojo. El ajuste al encuadre se aplica a todo el grupo por
  * igual, de modo que esa proporción no se falsea.
  */
-function layout(microbes: Microbe[], scale: MicroScale): { items: Placed[]; fit: number } {
+function layout(
+  microbes: Microbe[],
+  scale: MicroScale,
+): { items: Placed[]; extentMain: number; maxCross: number } {
   const GAP = 0.22; // separación extra, relativa al hueco del vecino
-  const sizes = microbes.map((m) => Math.max(0.16, (m.sizeUm / scale.fovUm) * VIEW_W));
+  const sizes = microbes.map((m) => Math.max(0.16, (m.sizeUm / scale.fovUm) * FIELD));
   // Hueco reservado a cada uno (incluye halo y partes que sobresalen).
   const slots = microbes.map((m, i) => sizes[i] * (FOOTPRINT[m.shape] ?? FOOTPRINT_DEFAULT));
   const maxSlot = Math.max(...slots);
@@ -69,37 +86,48 @@ function layout(microbes: Microbe[], scale: MicroScale): { items: Placed[]; fit:
   microbes.forEach((m, i) => {
     const r = slots[i] / 2;
     if (i > 0) cursor += r + GAP * Math.max(r, slots[i - 1] / 2);
-    // Los pequeños se levantan/bajan un poco para que las etiquetas no choquen.
+    // Los pequeños se desvían a un lado y a otro alternativamente.
     const stagger = i % 2 === 0 ? 1 : -1;
-    const lift = (maxSlot / 2 - r) * 0.3 * stagger;
-    items.push({
-      microbe: m,
-      size: sizes[i],
-      position: [cursor, lift, ((i % 3) - 1) * 0.12],
-    });
+    const cross = (maxSlot / 2 - r) * 0.3 * stagger;
+    items.push({ microbe: m, size: sizes[i], main: cursor, cross, depth: ((i % 3) - 1) * 0.12 });
     cursor += r;
   });
 
-  // Extensión real de la fila: del borde izquierdo del primero al derecho del
+  // Extensión real de la fila: del borde inicial del primero al final del
   // último (el centro del primero está en 0, así que su borde queda en -r).
-  const left = -slots[0] / 2;
-  const right = items[items.length - 1].position[0] + slots[slots.length - 1] / 2;
-  const extentW = right - left;
-  const mid = (left + right) / 2;
-  items.forEach((it) => (it.position[0] -= mid));
+  const start = -slots[0] / 2;
+  const end = items[items.length - 1].main + slots[slots.length - 1] / 2;
+  const extentMain = end - start;
+  const mid = (start + end) / 2;
+  items.forEach((it) => (it.main -= mid));
 
-  const fit = Math.min(1.6, VIEW_W / Math.max(extentW, 0.001), VIEW_H / Math.max(maxSlot, 0.001));
-  return { items, fit };
+  return { items, extentMain, maxCross: maxSlot };
 }
 
 /* ------------------------------------------------------------------ */
 /* Un microbio a la deriva                                             */
 /* ------------------------------------------------------------------ */
 
-function Floater({ placed, fit, seed }: { placed: Placed; fit: number; seed: number }) {
+function Floater({
+  placed,
+  fit,
+  seed,
+  vertical,
+  index,
+}: {
+  placed: Placed;
+  fit: number;
+  seed: number;
+  /** La escalera baja por la pantalla (móvil en vertical) en vez de cruzarla. */
+  vertical: boolean;
+  index: number;
+}) {
   const group = useRef<THREE.Group>(null);
   const openMicrobe = useApp((s) => s.openMicrobe);
-  const { microbe, size, position } = placed;
+  const { microbe, size, main, cross, depth } = placed;
+
+  // El eje largo va en X (apaisado) o en Y de arriba abajo (vertical).
+  const home = vertical ? [cross, -main, depth] : [main, cross, depth];
 
   // Zona sensible al toque: al menos ~0,45 unidades de mundo, para que
   // incluso los microbios diminutos se puedan tocar con el dedo.
@@ -114,9 +142,9 @@ function Floater({ placed, fit, seed }: { placed: Placed; fit: number; seed: num
     const drift = size * 0.12 * (microbe.swims ? 1.6 : 1);
     const jitter = THREE.MathUtils.clamp(0.06 / Math.max(0.12, size), 0.004, 0.09);
     g.position.set(
-      position[0] + Math.sin(t * 0.45 + seed) * drift,
-      position[1] + Math.cos(t * 0.38 + seed * 1.3) * drift + Math.sin(t * 7.5 + seed) * jitter,
-      position[2] + Math.sin(t * 0.3 + seed * 0.7) * drift * 0.6,
+      home[0] + Math.sin(t * 0.45 + seed) * drift,
+      home[1] + Math.cos(t * 0.38 + seed * 1.3) * drift + Math.sin(t * 7.5 + seed) * jitter,
+      home[2] + Math.sin(t * 0.3 + seed * 0.7) * drift * 0.6,
     );
     // Giro contenido: si cabecean mucho, los modelos alargados (neurona, ADN)
     // se salen del hueco que tienen reservado.
@@ -144,8 +172,16 @@ function Floater({ placed, fit, seed }: { placed: Placed; fit: number; seed: num
           <meshBasicMaterial />
         </mesh>
       </group>
-      <Html center position={[0, Math.max(size * 0.62, 0.3) + 0.34, 0]} zIndexRange={[5, 0]}>
-        <div className="body-label" onClick={open}>
+      <Html
+        center
+        position={vertical ? [0, Math.max(size * 0.5, 0.2) + 0.22, 0] : [0, Math.max(size * 0.62, 0.3) + 0.34, 0]}
+        zIndexRange={[5, 0]}
+      >
+        <div
+          className="body-label"
+          onClick={open}
+          style={vertical ? { transform: `translateX(${index % 2 === 0 ? -46 : 46}%)` } : undefined}
+        >
           <span className="chip">
             {microbe.emoji} {microbe.name.replace('El ', '').replace('La ', '')}
             <i className="era-pill" style={{ background: KIND_COLORS[microbe.kind] }}>
@@ -192,8 +228,8 @@ function Debris({ count }: { count: number }) {
   const positions = useMemo(() => {
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      p[i * 3] = (Math.random() - 0.5) * VIEW_W * 1.6;
-      p[i * 3 + 1] = (Math.random() - 0.5) * VIEW_H * 1.8;
+      p[i * 3] = (Math.random() - 0.5) * FIELD * 1.6;
+      p[i * 3 + 1] = (Math.random() - 0.5) * FIELD * 1.4;
       p[i * 3 + 2] = (Math.random() - 0.5) * 8;
     }
     return p;
@@ -204,7 +240,7 @@ function Debris({ count }: { count: number }) {
     if (!geo) return;
     const t = clock.elapsedTime;
     const pos = geo.attributes.position;
-    const top = (VIEW_H * 1.8) / 2;
+    const top = (FIELD * 1.4) / 2;
     for (let i = 0; i < pos.count; i++) {
       pos.setX(i, pos.getX(i) + Math.sin(t * 0.5 + i) * delta * 0.22);
       let y = pos.getY(i) + delta * 0.1 + Math.cos(t * 0.7 + i) * delta * 0.18;
@@ -233,10 +269,52 @@ function Debris({ count }: { count: number }) {
   );
 }
 
-/** Al cambiar de zoom, el grupo entra con un pequeño "enfoque". */
-function FocusIn({ children, keyId, fit }: { children: ReactNode; keyId: string; fit: number }) {
+/**
+ * Orienta y encaja la escalera de tamaños en la pantalla que toque.
+ *
+ * Antes el encaje usaba medidas fijas pensadas para una pantalla apaisada: en
+ * un móvil en vertical la fila se salía por los lados y, como no había ni
+ * desplazamiento ni zoom, era imposible llegar a los que quedaban fuera.
+ * Ahora se mide el viewport de verdad (en unidades de mundo) y la escalera se
+ * pone en vertical cuando la pantalla es más alta que ancha.
+ *
+ * Se reservan márgenes para el HUD: la barra de arriba y los controles de
+ * abajo tapan bastante alto, sobre todo en vertical.
+ */
+function Ladder({
+  children,
+  keyId,
+  extentMain,
+  maxCross,
+  vertical,
+  onFit,
+}: {
+  children: ReactNode;
+  keyId: string;
+  extentMain: number;
+  maxCross: number;
+  vertical: boolean;
+  onFit: (fit: number) => void;
+}) {
   const ref = useRef<THREE.Group>(null);
+  const size = useThree((s) => s.size);
   const t = useRef(0);
+
+  const fit = useMemo(() => {
+    const view = visibleSizeAt(CAM_FOV, size.width / size.height, CAM_DIST);
+    // Alto útil: hay que descontar el HUD superior y los controles inferiores.
+    const usableH = view.height * (vertical ? 0.66 : 0.62);
+    const usableW = view.width * 0.94;
+    const availMain = vertical ? usableH : usableW;
+    const availCross = vertical ? usableW : usableH;
+    return Math.min(1.6, availMain / Math.max(extentMain, 0.001), availCross / Math.max(maxCross, 0.001));
+  }, [size.width, size.height, vertical, extentMain, maxCross]);
+
+  useEffect(() => {
+    onFit(fit);
+  }, [fit, onFit]);
+
+  // Al cambiar de zoom, el grupo entra con un pequeño "enfoque".
   useEffect(() => {
     t.current = 0;
   }, [keyId]);
@@ -246,14 +324,43 @@ function FocusIn({ children, keyId, fit }: { children: ReactNode; keyId: string;
     const e = 1 - Math.pow(1 - t.current, 3);
     ref.current.scale.setScalar(fit * (0.86 + e * 0.14));
   });
+
   return <group ref={ref}>{children}</group>;
+}
+
+/** Detecta si la pantalla es más alta que ancha (móvil en vertical). */
+function useVertical(): boolean {
+  const size = useThree((s) => s.size);
+  return size.height > size.width * 1.05;
+}
+
+/** Puente: la orientación se decide dentro del Canvas y la necesitan los
+ *  hijos, así que se calcula aquí y se pasa por render prop. */
+function Field({ scale }: { scale: MicroScale }) {
+  const vertical = useVertical();
+  const { items, extentMain, maxCross } = useMemo(() => layout(microbesAtScale(scale), scale), [scale]);
+  const [fit, setFit] = useState(1);
+  const onFit = useCallback((f: number) => setFit(f), []);
+
+  return (
+    <Ladder
+      keyId={scale.id}
+      extentMain={extentMain}
+      maxCross={maxCross}
+      vertical={vertical}
+      onFit={onFit}
+    >
+      {items.map((it, i) => (
+        <Floater key={it.microbe.id} placed={it} fit={fit} seed={i * 2.7 + 1} vertical={vertical} index={i} />
+      ))}
+    </Ladder>
+  );
 }
 
 export default function MicroScene() {
   const quality = useApp((s) => s.quality);
   const [level, setLevel] = useState(2); // arranca en "las células"
   const scale = SCALES[level];
-  const { items, fit } = useMemo(() => layout(microbesAtScale(scale), scale), [scale]);
 
   useEffect(() => {
     speak(`${scale.name}. ${scale.reference}`);
@@ -263,7 +370,7 @@ export default function MicroScene() {
   return (
     <>
       <div className="scene-canvas micro-field" style={{ pointerEvents: 'auto' }}>
-        <Canvas camera={{ position: [0, 0, 11], fov: 50 }} dpr={quality.dpr} gl={{ antialias: quality.antialias }}>
+        <Canvas camera={{ position: [0, 0, CAM_DIST], fov: CAM_FOV }} dpr={quality.dpr} gl={{ antialias: quality.antialias }}>
           <color attach="background" args={['#08131f']} />
           <fog attach="fog" args={['#0a1a28', 16, 34]} />
 
@@ -274,22 +381,17 @@ export default function MicroScene() {
           {/* Luz que atraviesa la muestra desde detrás, como en un microscopio */}
           <pointLight position={[0, 0, -6]} intensity={24} color={scale.color} distance={26} decay={2} />
 
-          <FocusIn keyId={scale.id} fit={fit}>
-            {items.map((it, i) => (
-              <Floater key={it.microbe.id} placed={it} fit={fit} seed={i * 2.7 + 1} />
-            ))}
-          </FocusIn>
+          <Field scale={scale} />
 
           <Debris count={scaleCount(70, quality, 25)} />
 
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            rotateSpeed={0.25}
-            maxPolarAngle={Math.PI * 0.62}
-            minPolarAngle={Math.PI * 0.38}
-            maxAzimuthAngle={0.35}
-            minAzimuthAngle={-0.35}
+          {/* Se puede girar, acercar y desplazar: antes estaba todo bloqueado
+              y lo que quedaba fuera de pantalla era inalcanzable. */}
+          <Controls
+            minDistance={4}
+            maxDistance={20}
+            maxPolarAngle={Math.PI * 0.85}
+            minPolarAngle={Math.PI * 0.15}
           />
           <AdaptiveQuality />
           {/* Poca profundidad de campo: el sello visual del microscopio */}

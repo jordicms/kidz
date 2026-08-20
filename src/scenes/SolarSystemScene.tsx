@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Line, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Line, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette, ToneMapping, GodRays } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import { SUN, PLANETS, DWARF_PLANETS, ASTEROID_BELT } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
+import Controls from '../components/three/Controls';
 import CelestialBody from '../components/three/CelestialBody';
 import { createMoonTexture, createGlowTexture } from '../utils/textures';
 import { AdaptiveQuality, ShootingStars, SpaceBackground } from '../components/three/SceneExtras';
@@ -451,9 +452,8 @@ export default function SolarSystemScene() {
         <Comet />
         {/* Lluvia de meteoritos: estrellas fugaces frecuentes cruzando el cielo */}
         <ShootingStars count={quality.tier === 'low' ? 3 : 6} radius={120} />
-        <OrbitControls
+        <Controls
           ref={controlsRef as never}
-          enablePan={false}
           minDistance={8}
           maxDistance={160}
           maxPolarAngle={Math.PI * 0.85}
