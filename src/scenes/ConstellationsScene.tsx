@@ -10,6 +10,7 @@ import Controls from '../components/three/Controls';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
 import { speak, stopSpeaking } from '../utils/speech';
+import PhotoCard from '../components/ui/PhotoCard';
 
 function ConstellationStars({ c, active, onSelect }: { c: Constellation; active: boolean; onSelect: () => void }) {
   const flare = useMemo(() => createFlareTexture('const-star', 'rgba(220,235,255,1)'), []);
@@ -72,6 +73,8 @@ export default function ConstellationsScene() {
         <div className="bh-caption">
           <strong>{c.emoji} {c.name}</strong>
           <p style={{ marginTop: 4 }}>{c.myth}</p>
+          {/* La misma constelación, fotografiada en el cielo de verdad */}
+          <PhotoCard photoKey={`const-${c.id}`} label="En el cielo real" compact />
         </div>
         <div className="control-row" style={{ pointerEvents: 'auto', flexWrap: 'wrap', justifyContent: 'center' }}>
           {CONSTELLATIONS.map((con, i) => (

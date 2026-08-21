@@ -2,6 +2,8 @@ import { useApp } from '../../state/store';
 import { getDeepSpaceObject } from '../../data/deepSpace';
 import StoryPager from './StoryPager';
 import FactsGrid from './FactsGrid';
+import PhotoCard from './PhotoCard';
+import { getPhoto } from '../../utils/photos';
 
 /** Hoja inferior con la historia de un objeto del espacio profundo. */
 export default function DeepSpaceStory() {
@@ -30,6 +32,12 @@ export default function DeepSpaceStory() {
         </div>
         <StoryPager story={obj.story} storyKey={obj.id} />
         <FactsGrid facts={obj.facts} />
+        {getPhoto(obj.id) && (
+          <>
+            <div className="section-title">📷 ¿Cómo es en realidad?</div>
+            <PhotoCard photoKey={obj.id} label="Foto real" />
+          </>
+        )}
       </div>
     </div>
   );

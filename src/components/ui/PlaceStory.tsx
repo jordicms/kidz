@@ -2,6 +2,8 @@ import { useApp } from '../../state/store';
 import { getPlace } from '../../data/ocean';
 import StoryPager from './StoryPager';
 import FactsGrid from './FactsGrid';
+import PhotoCard from './PhotoCard';
+import { getPhoto } from '../../utils/photos';
 
 /** Hoja inferior con la historia de un lugar del océano. Mismo patrón que
  *  DeepSpaceStory, así que reutiliza sus estilos y componentes. */
@@ -31,6 +33,12 @@ export default function PlaceStory() {
         </div>
         <StoryPager story={place.story} storyKey={place.id} />
         <FactsGrid facts={place.facts} />
+        {getPhoto(place.id) && (
+          <>
+            <div className="section-title">📷 ¿Cómo es en realidad?</div>
+            <PhotoCard photoKey={place.id} label="Foto real" />
+          </>
+        )}
       </div>
     </div>
   );

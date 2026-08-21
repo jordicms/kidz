@@ -1009,6 +1009,26 @@ body {
   line-height: 1.35;
 }
 
+.photo-card-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px auto 0;
+  max-width: 340px;
+  text-align: left;
+}
+
+.photo-card-compact img {
+  width: 84px;
+  height: 62px;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.photo-card-compact figcaption {
+  padding: 0 8px 0 0;
+}
+
 .photo-card .photo-label {
   display: inline-block;
   font-weight: 800;

@@ -1,47 +1,481 @@
 {
-  "_comment": "Fuentes de las fotos reales que se empaquetan en la app. Ejecuta `node scripts/fetch-photos.mjs` (con conexión) para descargarlas a src/assets/photos/<key>.<ext>. Las URLs usan Wikimedia Special:FilePath; si alguna falla, el script lo indica y solo hay que corregir esa entrada. key = id del astro, o `<idDino>-fossil` / `<idDino>-life`.",
+  "_comment": "Fotos reales de las fichas. Una entrada lleva `url` (imagen exacta) o `search` (términos que el script busca en la API de Wikimedia Commons, quedándose con la mejor foto de licencia libre). Ejecuta `npm run photos`; lo elegido queda anotado en photos.lock.json para que sea reproducible.",
   "images": [
-    { "key": "sol", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Sun920607.jpg?width=900", "credit": "📷 NASA/NSO · dominio público", "license": "PD" },
-    { "key": "mercurio", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mercury in true color.jpg?width=900", "credit": "📷 NASA/MESSENGER · dominio público", "license": "PD" },
-    { "key": "venus", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Venus globe.jpg?width=900", "credit": "📷 NASA/Magellan · dominio público", "license": "PD" },
-    { "key": "tierra", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/The Earth seen from Apollo 17.jpg?width=900", "credit": "📷 NASA (Apollo 17) · dominio público", "license": "PD" },
-    { "key": "marte", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/OSIRIS Mars true color.jpg?width=900", "credit": "📷 ESA/Rosetta (OSIRIS) · CC BY-SA 3.0 IGO", "license": "CC-BY-SA-3.0-IGO" },
-    { "key": "jupiter", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Jupiter by Cassini-Huygens.jpg?width=900", "credit": "📷 NASA/JPL (Cassini) · dominio público", "license": "PD" },
-    { "key": "saturno", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Saturn during Equinox.jpg?width=900", "credit": "📷 NASA/JPL (Cassini) · dominio público", "license": "PD" },
-    { "key": "urano", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Uranus2.jpg?width=900", "credit": "📷 NASA/JPL (Voyager 2) · dominio público", "license": "PD" },
-    { "key": "neptuno", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Neptune Full.jpg?width=900", "credit": "📷 NASA/JPL (Voyager 2) · dominio público", "license": "PD" },
-    { "key": "pluton", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pluto in True Color - High-Res.jpg?width=900", "credit": "📷 NASA/JHUAPL/SwRI (New Horizons) · dominio público", "license": "PD" },
-    { "key": "ceres", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ceres - RC3 - Haulani Crater (22381131691).jpg?width=900", "credit": "📷 NASA/JPL (Dawn) · dominio público", "license": "PD" },
-
-    { "key": "trex-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus skeleton.jpg?width=900", "credit": "📷 Esqueleto de T. rex · Wikimedia Commons", "license": "verify" },
-    { "key": "trex-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex by durbed.jpg?width=900", "credit": "🎨 Reconstrucción: Durbed · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
-
-    { "key": "triceratops-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops AMNH 01.jpg?width=900", "credit": "📷 Esqueleto, AMNH · Wikimedia Commons", "license": "verify" },
-    { "key": "triceratops-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops horridus.png?width=900", "credit": "🎨 Reconstrucción de Triceratops · Wikimedia Commons", "license": "verify" },
-
-    { "key": "plateosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus engelhardti Tubingen.JPG?width=900", "credit": "📷 Esqueleto de Plateosaurus, Tubinga · Wikimedia Commons", "license": "verify" },
-    { "key": "plateosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Sketch plateosaurus.jpg?width=900", "credit": "🎨 Reconstrucción de Plateosaurus · Wikimedia Commons", "license": "verify" },
-
-    { "key": "brachiosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/FMNH Brachiosaurus.JPG?width=900", "credit": "📷 Esqueleto de Brachiosaurus, Field Museum · Wikimedia Commons", "license": "verify" },
-    { "key": "brachiosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus DB.jpg?width=900", "credit": "🎨 Reconstrucción: Dmitry Bogdanov · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
-
-    { "key": "stegosaurus-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus Senckenberg.jpg?width=900", "credit": "📷 Esqueleto · Wikimedia Commons", "license": "verify" },
-    { "key": "stegosaurus-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/202009 Stegosaurus stenops.png?width=900", "credit": "🎨 Reconstrucción de Stegosaurus · Wikimedia Commons", "license": "verify" },
-
-    { "key": "pteranodon-fossil", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon skeleton.JPG?width=900", "credit": "📷 Esqueleto de Pteranodon · Wikimedia Commons", "license": "verify" },
-    { "key": "pteranodon-life", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900", "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
-
-    { "key": "corazon", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Diagram of the human heart (cropped).svg?width=700", "credit": "🎨 Diagrama del corazón · Wikimedia Commons · CC BY-SA 3.0", "license": "CC-BY-SA-3.0" },
-    { "key": "pulmones", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Lungs diagram simple.svg?width=800", "credit": "🎨 Diagrama de pulmones: Patrick J. Lynch · CC BY 2.5", "license": "CC-BY-2.5" },
-    { "key": "cerebro", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human brain.png?width=800", "credit": "🎨 Cerebro humano · Wikimedia Commons", "license": "verify" },
-    { "key": "estomago", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stomach diagram.svg?width=700", "credit": "🎨 Diagrama del estómago · Wikimedia Commons", "license": "verify" },
-    { "key": "huesos", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human skeleton front en.svg?width=600", "credit": "🎨 Esqueleto humano · Wikimedia Commons · CC BY-SA", "license": "CC-BY-SA" },
-
-    { "key": "ballena", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback Whale underwater shot.jpg?width=900", "credit": "📷 Ballena jorobada · Wikimedia Commons", "license": "verify" },
-    { "key": "tortuga", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Green Sea Turtle grazing seagrass.jpg?width=900", "credit": "📷 Tortuga verde · Wikimedia Commons", "license": "verify" },
-    { "key": "tiburon", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/White shark.jpg?width=900", "credit": "📷 Tiburón blanco · Wikimedia Commons", "license": "verify" },
-    { "key": "medusa", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Aurelia aurita 2.jpg?width=900", "credit": "📷 Medusa común · Wikimedia Commons", "license": "verify" },
-    { "key": "pulpo", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Octopus2.jpg?width=900", "credit": "📷 Pulpo · Wikimedia Commons", "license": "verify" },
-    { "key": "rape", "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback anglerfish.png?width=900", "credit": "🎨 Rape abisal · Wikimedia Commons", "license": "verify" }
+    {
+      "key": "sol",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Sun920607.jpg?width=900",
+      "credit": "📷 NASA/NSO · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "mercurio",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Mercury in true color.jpg?width=900",
+      "credit": "📷 NASA/MESSENGER · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "venus",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Venus globe.jpg?width=900",
+      "credit": "📷 NASA/Magellan · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "tierra",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/The Earth seen from Apollo 17.jpg?width=900",
+      "credit": "📷 NASA (Apollo 17) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "marte",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/OSIRIS Mars true color.jpg?width=900",
+      "credit": "📷 ESA/Rosetta (OSIRIS) · CC BY-SA 3.0 IGO",
+      "license": "CC-BY-SA-3.0-IGO"
+    },
+    {
+      "key": "jupiter",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Jupiter by Cassini-Huygens.jpg?width=900",
+      "credit": "📷 NASA/JPL (Cassini) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "saturno",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Saturn during Equinox.jpg?width=900",
+      "credit": "📷 NASA/JPL (Cassini) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "urano",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Uranus2.jpg?width=900",
+      "credit": "📷 NASA/JPL (Voyager 2) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "neptuno",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Neptune Full.jpg?width=900",
+      "credit": "📷 NASA/JPL (Voyager 2) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "pluton",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pluto in True Color - High-Res.jpg?width=900",
+      "credit": "📷 NASA/JHUAPL/SwRI (New Horizons) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "ceres",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ceres - RC3 - Haulani Crater (22381131691).jpg?width=900",
+      "credit": "📷 NASA/JPL (Dawn) · dominio público",
+      "license": "PD"
+    },
+    {
+      "key": "trex-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus skeleton.jpg?width=900",
+      "credit": "📷 Esqueleto de T. rex · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "trex-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tyrannosaurus rex by durbed.jpg?width=900",
+      "credit": "🎨 Reconstrucción: Durbed · CC BY-SA 3.0",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "key": "triceratops-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops AMNH 01.jpg?width=900",
+      "credit": "📷 Esqueleto, AMNH · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "triceratops-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Triceratops horridus.png?width=900",
+      "credit": "🎨 Reconstrucción de Triceratops · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "plateosaurus-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Plateosaurus engelhardti Tubingen.JPG?width=900",
+      "credit": "📷 Esqueleto de Plateosaurus, Tubinga · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "plateosaurus-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Sketch plateosaurus.jpg?width=900",
+      "credit": "🎨 Reconstrucción de Plateosaurus · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "brachiosaurus-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/FMNH Brachiosaurus.JPG?width=900",
+      "credit": "📷 Esqueleto de Brachiosaurus, Field Museum · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "brachiosaurus-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Brachiosaurus DB.jpg?width=900",
+      "credit": "🎨 Reconstrucción: Dmitry Bogdanov · CC BY-SA 3.0",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "key": "stegosaurus-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stegosaurus Senckenberg.jpg?width=900",
+      "credit": "📷 Esqueleto · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "stegosaurus-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/202009 Stegosaurus stenops.png?width=900",
+      "credit": "🎨 Reconstrucción de Stegosaurus · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "pteranodon-fossil",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon skeleton.JPG?width=900",
+      "credit": "📷 Esqueleto de Pteranodon · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "pteranodon-life",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Pteranodon longiceps mmartyniuk wiki.png?width=900",
+      "credit": "🎨 Reconstrucción: M. Martyniuk · CC BY-SA 3.0",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "key": "corazon",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Diagram of the human heart (cropped).svg?width=700",
+      "credit": "🎨 Diagrama del corazón · Wikimedia Commons · CC BY-SA 3.0",
+      "license": "CC-BY-SA-3.0"
+    },
+    {
+      "key": "pulmones",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Lungs diagram simple.svg?width=800",
+      "credit": "🎨 Diagrama de pulmones: Patrick J. Lynch · CC BY 2.5",
+      "license": "CC-BY-2.5"
+    },
+    {
+      "key": "cerebro",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human brain.png?width=800",
+      "credit": "🎨 Cerebro humano · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "estomago",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Stomach diagram.svg?width=700",
+      "credit": "🎨 Diagrama del estómago · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "huesos",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Human skeleton front en.svg?width=600",
+      "credit": "🎨 Esqueleto humano · Wikimedia Commons · CC BY-SA",
+      "license": "CC-BY-SA"
+    },
+    {
+      "key": "ballena",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback Whale underwater shot.jpg?width=900",
+      "credit": "📷 Ballena jorobada · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "tortuga",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Green Sea Turtle grazing seagrass.jpg?width=900",
+      "credit": "📷 Tortuga verde · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "tiburon",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/White shark.jpg?width=900",
+      "credit": "📷 Tiburón blanco · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "medusa",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Aurelia aurita 2.jpg?width=900",
+      "credit": "📷 Medusa común · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "pulpo",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Octopus2.jpg?width=900",
+      "credit": "📷 Pulpo · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "rape",
+      "url": "https://commons.wikimedia.org/wiki/Special:FilePath/Humpback anglerfish.png?width=900",
+      "credit": "🎨 Rape abisal · Wikimedia Commons",
+      "license": "verify"
+    },
+    {
+      "key": "luna",
+      "search": "full moon photograph telescope"
+    },
+    {
+      "key": "eris",
+      "search": "Eris dwarf planet Hubble"
+    },
+    {
+      "key": "makemake",
+      "search": "Makemake dwarf planet Hubble"
+    },
+    {
+      "key": "haumea",
+      "search": "Haumea dwarf planet"
+    },
+    {
+      "key": "sagitario-a",
+      "search": "Sagittarius A* black hole Event Horizon Telescope"
+    },
+    {
+      "key": "via-lactea",
+      "search": "Milky Way galaxy night sky panorama"
+    },
+    {
+      "key": "andromeda",
+      "search": "Andromeda Galaxy M31"
+    },
+    {
+      "key": "orion",
+      "search": "Orion Nebula Hubble"
+    },
+    {
+      "key": "cangrejo",
+      "search": "Crab Nebula Hubble"
+    },
+    {
+      "key": "pulsar",
+      "search": "Vela pulsar neutron star Chandra"
+    },
+    {
+      "key": "pleyades",
+      "search": "Pleiades star cluster M45"
+    },
+    {
+      "key": "quasar",
+      "search": "quasar 3C 273 Hubble"
+    },
+    {
+      "key": "cumulo-globular",
+      "search": "globular cluster Omega Centauri"
+    },
+    {
+      "key": "aguila",
+      "search": "Eagle Nebula Pillars of Creation Hubble"
+    },
+    {
+      "key": "cometa",
+      "search": "Comet NEOWISE photograph"
+    },
+    {
+      "key": "trex",
+      "search": "Tyrannosaurus rex skeleton museum mount"
+    },
+    {
+      "key": "triceratops",
+      "search": "Triceratops skeleton museum"
+    },
+    {
+      "key": "plateosaurus",
+      "search": "Plateosaurus skeleton museum"
+    },
+    {
+      "key": "brachiosaurus",
+      "search": "Brachiosaurus skeleton museum"
+    },
+    {
+      "key": "stegosaurus",
+      "search": "Stegosaurus skeleton museum"
+    },
+    {
+      "key": "pteranodon",
+      "search": "Pteranodon skeleton museum"
+    },
+    {
+      "key": "apatosaurus",
+      "search": "Apatosaurus skeleton museum"
+    },
+    {
+      "key": "diplodocus",
+      "search": "Diplodocus skeleton museum"
+    },
+    {
+      "key": "parasaurolophus",
+      "search": "Parasaurolophus skeleton museum"
+    },
+    {
+      "key": "velociraptor",
+      "search": "Velociraptor fossil skeleton"
+    },
+    {
+      "key": "espinosaurio",
+      "search": "Spinosaurus skeleton museum"
+    },
+    {
+      "key": "compsognathus",
+      "search": "Compsognathus fossil"
+    },
+    {
+      "key": "anquilosaurio",
+      "search": "Ankylosaurus skeleton museum"
+    },
+    {
+      "key": "delfin",
+      "search": "bottlenose dolphin swimming"
+    },
+    {
+      "key": "orca",
+      "search": "orca killer whale"
+    },
+    {
+      "key": "pez-payaso",
+      "search": "clownfish Amphiprion anemone"
+    },
+    {
+      "key": "caballito-de-mar",
+      "search": "seahorse Hippocampus underwater"
+    },
+    {
+      "key": "mantarraya",
+      "search": "manta ray swimming underwater"
+    },
+    {
+      "key": "tiburon-ballena",
+      "search": "whale shark Rhincodon typus"
+    },
+    {
+      "key": "estrella-de-mar",
+      "search": "starfish sea star underwater"
+    },
+    {
+      "key": "morena",
+      "search": "moray eel reef"
+    },
+    {
+      "key": "pez-linterna",
+      "search": "lanternfish Myctophidae"
+    },
+    {
+      "key": "nautilus",
+      "search": "Nautilus pompilius shell animal"
+    },
+    {
+      "key": "pez-luna",
+      "search": "ocean sunfish Mola mola"
+    },
+    {
+      "key": "calamar-gigante",
+      "search": "giant squid Architeuthis specimen"
+    },
+    {
+      "key": "pulpo-dumbo",
+      "search": "Grimpoteuthis dumbo octopus"
+    },
+    {
+      "key": "arrecife",
+      "search": "coral reef fish tropical"
+    },
+    {
+      "key": "kelp",
+      "search": "kelp forest Macrocystis underwater"
+    },
+    {
+      "key": "pecio",
+      "search": "shipwreck underwater coral"
+    },
+    {
+      "key": "fumarolas",
+      "search": "hydrothermal vent black smoker"
+    },
+    {
+      "key": "tardigrado",
+      "search": "tardigrade scanning electron microscope"
+    },
+    {
+      "key": "ameba",
+      "search": "Amoeba proteus light microscope"
+    },
+    {
+      "key": "paramecio",
+      "search": "Paramecium light microscope"
+    },
+    {
+      "key": "diatomea",
+      "search": "diatoms scanning electron microscope"
+    },
+    {
+      "key": "celula-animal",
+      "search": "HeLa cells fluorescence microscope"
+    },
+    {
+      "key": "celula-vegetal",
+      "search": "plant cells chloroplasts microscope"
+    },
+    {
+      "key": "neurona",
+      "search": "neuron cell culture microscope"
+    },
+    {
+      "key": "globulo-rojo",
+      "search": "red blood cells scanning electron microscope"
+    },
+    {
+      "key": "globulo-blanco",
+      "search": "neutrophil white blood cell microscope"
+    },
+    {
+      "key": "levadura",
+      "search": "Saccharomyces cerevisiae yeast microscope"
+    },
+    {
+      "key": "bacteria",
+      "search": "Escherichia coli scanning electron microscope"
+    },
+    {
+      "key": "estreptococo",
+      "search": "Streptococcus scanning electron microscope"
+    },
+    {
+      "key": "cianobacteria",
+      "search": "cyanobacteria microscope Oscillatoria"
+    },
+    {
+      "key": "coronavirus",
+      "search": "SARS-CoV-2 transmission electron microscope"
+    },
+    {
+      "key": "bacteriofago",
+      "search": "bacteriophage T4 electron microscope"
+    },
+    {
+      "key": "adn",
+      "search": "DNA double helix model"
+    },
+    {
+      "key": "intestinos",
+      "search": "human small intestine anatomy"
+    },
+    {
+      "key": "musculos",
+      "search": "human muscular system anatomy"
+    },
+    {
+      "key": "const-osa-mayor",
+      "search": "Ursa Major Big Dipper night sky"
+    },
+    {
+      "key": "const-orion",
+      "search": "Orion constellation night sky photograph"
+    },
+    {
+      "key": "const-casiopea",
+      "search": "Cassiopeia constellation night sky"
+    },
+    {
+      "key": "const-cruz-del-sur",
+      "search": "Crux Southern Cross constellation"
+    },
+    {
+      "key": "const-leo",
+      "search": "Leo constellation night sky"
+    }
   ]
 }
