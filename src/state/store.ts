@@ -44,6 +44,8 @@ interface AppState {
   microbeId: string | null;
   /** Objeto de espacio profundo con su historia abierta. */
   deepSpaceId: string | null;
+  /** Lugar del océano con su historia abierta (arrecife, pecio, fumarolas…). */
+  placeId: string | null;
   /** Multiplicador de velocidad de la simulación. */
   speed: number;
   /** Preset de calidad gráfica actual (regula efectos y partículas). */
@@ -76,6 +78,8 @@ interface AppState {
   openBody: (id: string) => void;
   openDeepSpace: (id: string) => void;
   closeDeepSpace: () => void;
+  openPlace: (id: string) => void;
+  closePlace: () => void;
   cycleSpeed: () => void;
   toggleMuted: () => void;
   setQuality: (q: QualityPreset) => void;
@@ -125,6 +129,7 @@ export const useApp = create<AppState>((set) => ({
   seaId: null,
   microbeId: null,
   deepSpaceId: null,
+  placeId: null,
   speed: 1,
   quality: detectPreset(),
   muted: initialMuted,
@@ -132,7 +137,7 @@ export const useApp = create<AppState>((set) => ({
   viewResetNonce: 0,
   resetView: () => set((s) => ({ viewResetNonce: s.viewResetNonce + 1 })),
   goHome: () =>
-    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, microbeId: null, deepSpaceId: null }),
+    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, microbeId: null, deepSpaceId: null, placeId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),
   goGalaxy: () => set({ view: 'galaxy', bodyId: null, deepSpaceId: null }),
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
@@ -145,7 +150,7 @@ export const useApp = create<AppState>((set) => ({
   goBody: () => set({ view: 'body', organId: null, journeyId: null, deepSpaceId: null }),
   openOrgan: (id) => set((s) => ({ view: 'organ', organId: id, visited: visit(s.visited, `organo:${id}`) })),
   goJourney: (id) => set((s) => ({ view: 'journey', journeyId: id, visited: visit(s.visited, `viaje:${id}`) })),
-  goOcean: () => set({ view: 'ocean', seaId: null, deepSpaceId: null }),
+  goOcean: () => set({ view: 'ocean', seaId: null, deepSpaceId: null, placeId: null }),
   openSea: (id) => set((s) => ({ view: 'sea', seaId: id, visited: visit(s.visited, `mar:${id}`) })),
   goMicro: () => set({ view: 'micro', microbeId: null, deepSpaceId: null }),
   openMicrobe: (id) => set((s) => ({ view: 'microbe', microbeId: id, visited: visit(s.visited, `micro:${id}`) })),
@@ -153,6 +158,8 @@ export const useApp = create<AppState>((set) => ({
   openBody: (id) => set((s) => ({ view: 'planet', bodyId: id, visited: visit(s.visited, `astro:${id}`) })),
   openDeepSpace: (id) => set((s) => ({ deepSpaceId: id, visited: visit(s.visited, `deep:${id}`) })),
   closeDeepSpace: () => set({ deepSpaceId: null }),
+  openPlace: (id) => set((s) => ({ placeId: id, visited: visit(s.visited, `lugar:${id}`) })),
+  closePlace: () => set({ placeId: null }),
   cycleSpeed: () =>
     set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] })),
   toggleMuted: () =>
