@@ -3,6 +3,7 @@ import { useApp, type View } from './state/store';
 import HomeScreen from './screens/HomeScreen';
 import PassportScreen from './screens/PassportScreen';
 import DeepSpaceStory from './components/ui/DeepSpaceStory';
+import PlaceStory from './components/ui/PlaceStory';
 import SceneTransition from './components/ui/SceneTransition';
 import { DINOS, ERA_COLORS, ERAS } from './data/dinos';
 import { startAmbient, stopAmbient, type AmbientKind } from './utils/sound';
@@ -247,6 +248,7 @@ export default function App() {
       </Suspense>
       <Hud />
       <DeepSpaceStory />
+      <PlaceStory />
       <SceneTransition />
       <AmbientAudio />
     </div>
