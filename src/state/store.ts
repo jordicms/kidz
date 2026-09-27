@@ -14,13 +14,18 @@ export type View =
   | 'galaxy'
   | 'universe'
   | 'blackhole'
+  | 'starlife'
+  | 'constellations'
   | 'dino-island'
   | 'dino'
+  | 'dig'
   | 'body'
   | 'organ'
   | 'journey'
   | 'ocean'
   | 'sea'
+  | 'micro'
+  | 'microbe'
   | 'passport';
 
 interface AppState {
@@ -35,8 +40,12 @@ interface AppState {
   journeyId: string | null;
   /** Criatura marina seleccionada (vista ficha). */
   seaId: string | null;
+  /** Microbio seleccionado (vista ficha). */
+  microbeId: string | null;
   /** Objeto de espacio profundo con su historia abierta. */
   deepSpaceId: string | null;
+  /** Lugar del océano con su historia abierta (arrecife, pecio, fumarolas…). */
+  placeId: string | null;
   /** Multiplicador de velocidad de la simulación. */
   speed: number;
   /** Preset de calidad gráfica actual (regula efectos y partículas). */
@@ -45,22 +54,32 @@ interface AppState {
   muted: boolean;
   /** Pasaporte del explorador: claves visitadas (persistente). */
   visited: Record<string, true>;
+  /** Contador que, al subir, hace que los controles vuelvan a la vista inicial. */
+  viewResetNonce: number;
+  resetView: () => void;
   goHome: () => void;
   goSolar: () => void;
   goGalaxy: () => void;
   goUniverse: () => void;
   goBlackHole: () => void;
+  goStarLife: () => void;
+  goConstellations: () => void;
   goDinoIsland: () => void;
+  goDig: () => void;
   openDino: (id: string) => void;
   goBody: () => void;
   openOrgan: (id: string) => void;
   goJourney: (id: string) => void;
   goOcean: () => void;
   openSea: (id: string) => void;
+  goMicro: () => void;
+  openMicrobe: (id: string) => void;
   goPassport: () => void;
   openBody: (id: string) => void;
   openDeepSpace: (id: string) => void;
   closeDeepSpace: () => void;
+  openPlace: (id: string) => void;
+  closePlace: () => void;
   cycleSpeed: () => void;
   toggleMuted: () => void;
   setQuality: (q: QualityPreset) => void;
@@ -108,28 +127,39 @@ export const useApp = create<AppState>((set) => ({
   organId: null,
   journeyId: null,
   seaId: null,
+  microbeId: null,
   deepSpaceId: null,
+  placeId: null,
   speed: 1,
   quality: detectPreset(),
   muted: initialMuted,
   visited: loadVisited(),
+  viewResetNonce: 0,
+  resetView: () => set((s) => ({ viewResetNonce: s.viewResetNonce + 1 })),
   goHome: () =>
-    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, deepSpaceId: null }),
+    set({ view: 'home', bodyId: null, dinoId: null, organId: null, journeyId: null, seaId: null, microbeId: null, deepSpaceId: null, placeId: null }),
   goSolar: () => set({ view: 'solar', bodyId: null, deepSpaceId: null }),
   goGalaxy: () => set({ view: 'galaxy', bodyId: null, deepSpaceId: null }),
   goUniverse: () => set({ view: 'universe', bodyId: null, deepSpaceId: null }),
   goBlackHole: () => set({ view: 'blackhole', deepSpaceId: null }),
+  goStarLife: () => set({ view: 'starlife' }),
+  goConstellations: () => set({ view: 'constellations' }),
   goDinoIsland: () => set({ view: 'dino-island', dinoId: null, deepSpaceId: null }),
+  goDig: () => set({ view: 'dig' }),
   openDino: (id) => set((s) => ({ view: 'dino', dinoId: id, visited: visit(s.visited, `dino:${id}`) })),
   goBody: () => set({ view: 'body', organId: null, journeyId: null, deepSpaceId: null }),
   openOrgan: (id) => set((s) => ({ view: 'organ', organId: id, visited: visit(s.visited, `organo:${id}`) })),
   goJourney: (id) => set((s) => ({ view: 'journey', journeyId: id, visited: visit(s.visited, `viaje:${id}`) })),
-  goOcean: () => set({ view: 'ocean', seaId: null, deepSpaceId: null }),
+  goOcean: () => set({ view: 'ocean', seaId: null, deepSpaceId: null, placeId: null }),
   openSea: (id) => set((s) => ({ view: 'sea', seaId: id, visited: visit(s.visited, `mar:${id}`) })),
+  goMicro: () => set({ view: 'micro', microbeId: null, deepSpaceId: null }),
+  openMicrobe: (id) => set((s) => ({ view: 'microbe', microbeId: id, visited: visit(s.visited, `micro:${id}`) })),
   goPassport: () => set({ view: 'passport' }),
   openBody: (id) => set((s) => ({ view: 'planet', bodyId: id, visited: visit(s.visited, `astro:${id}`) })),
   openDeepSpace: (id) => set((s) => ({ deepSpaceId: id, visited: visit(s.visited, `deep:${id}`) })),
   closeDeepSpace: () => set({ deepSpaceId: null }),
+  openPlace: (id) => set((s) => ({ placeId: id, visited: visit(s.visited, `lugar:${id}`) })),
+  closePlace: () => set({ placeId: null }),
   cycleSpeed: () =>
     set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] })),
   toggleMuted: () =>

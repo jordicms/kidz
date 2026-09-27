@@ -16,6 +16,8 @@ export interface EffectsProps {
   chromatic?: number;
   /** Oscurecimiento de los bordes. */
   vignette?: number;
+  /** Radio del bloom. */
+  bloomRadius?: number;
 }
 
 const chromaOffset = new Vector2();
@@ -30,16 +32,19 @@ const chromaOffset = new Vector2();
  * En gama baja devuelve null y la escena se renderiza directa (con el ACES por
  * defecto de r3f), sin coste extra.
  */
-export default function Effects({ ao, bloomThreshold = 0.55, bloomScale = 1, dof, chromatic, vignette = 0.7 }: EffectsProps = {}) {
+export default function Effects({ ao, bloomThreshold = 0.55, bloomScale = 1, bloomRadius = 0.7, dof, chromatic, vignette = 0.7 }: EffectsProps = {}) {
   const quality = useApp((s) => s.quality);
   if (!quality.postprocessing) return null;
   const high = quality.tier === 'high';
   const aoOpts = typeof ao === 'object' ? ao : {};
+  // `ao` a secas (como lo usan las escenas previas) solo en gama alta; con
+  // opciones explícitas también en media, a media resolución.
+  const aoOn = typeof ao === 'object' ? true : !!ao && high;
   chromaOffset.set(chromatic ?? 0, (chromatic ?? 0) * 0.6);
 
   return (
-    <EffectComposer multisampling={ao ? 0 : quality.antialias ? 4 : 0}>
-      <>{ao ? (
+    <EffectComposer multisampling={aoOn ? 0 : quality.antialias ? 4 : 0}>
+      <>{aoOn ? (
         <N8AO
           halfRes={!high}
           quality={high ? 'high' : 'performance'}
@@ -57,12 +62,12 @@ export default function Effects({ ao, bloomThreshold = 0.55, bloomScale = 1, dof
         luminanceThreshold={bloomThreshold}
         luminanceSmoothing={0.25}
         mipmapBlur
-        radius={0.7}
+        radius={bloomRadius}
       />
       <>{chromatic ? <ChromaticAberration offset={chromaOffset} radialModulation modulationOffset={0.35} blendFunction={BlendFunction.NORMAL} /> : null}</>
       <Vignette eskil={false} offset={0.28} darkness={vignette} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      <>{ao ? <SMAA /> : null}</>
+      <>{aoOn ? <SMAA /> : null}</>
     </EffectComposer>
   );
 }

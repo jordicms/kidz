@@ -601,6 +601,88 @@ export const DWARF_PLANETS: Body[] = [
       { id: 'caronte', name: 'Caronte', emoji: '🩶', fact: 'Es tan grande que Plutón y ella bailan juntos.', size: 0.14, distance: 1, speed: 0.8, color: '#9a9a9a' },
     ],
   },
+  {
+    id: 'eris',
+    name: 'Eris',
+    emoji: '🌑',
+    kind: 'planeta enano',
+    tagline: 'La lejana que "destronó" a Plutón',
+    color: '#cfd2d6',
+    texture: { type: 'rocky', colors: ['#d8dade', '#a8adb4'], craters: 8, caps: '#ffffff' },
+    scene: { size: 0.3, distance: 74, orbitSpeed: 0.028, rotationSpeed: 0.09, phase: 3.1, eccentricity: 0.38, periapsis: 1.4, inclination: 0.4 },
+    facts: [
+      { icon: '⚖️', label: 'Tamaño', value: 'Casi igual que Plutón, pero más pesada' },
+      { icon: '🥶', label: 'Frío', value: 'De los lugares más fríos: hasta -240 °C' },
+      { icon: '📅', label: 'Su año', value: '¡557 años de la Tierra!' },
+      { icon: '🌙', label: 'Luna', value: 'Tiene una: Disnomia' },
+    ],
+    story: [
+      { emoji: '🌑', title: '¡Soy Eris!', text: 'Vivo aún más lejos que Plutón, en los confines helados del sistema solar. Soy tan grande como él.' },
+      { emoji: '⚖️', title: 'La culpable', text: 'Cuando me descubrieron, los científicos vieron que había cuerpos como Plutón y como yo... y por eso inventaron la palabra "planeta enano".' },
+      { emoji: '🌙', title: 'Mi luna', text: 'Tengo una lunita llamada Disnomia que gira a mi alrededor en la oscuridad.' },
+    ],
+    layers: [
+      { name: 'Corteza helada', color: '#d8dade', radius: 1, description: 'Hielo brillante que refleja mucho la luz.' },
+      { name: 'Núcleo rocoso', color: '#8a8d92', radius: 0.55, description: 'Roca en el centro.' },
+    ],
+    moons: [
+      { id: 'disnomia', name: 'Disnomia', emoji: '🌙', fact: 'La pequeña compañera de Eris.', size: 0.07, distance: 0.8, speed: 1, color: '#9a9a9a' },
+    ],
+  },
+  {
+    id: 'makemake',
+    name: 'Makemake',
+    emoji: '🔴',
+    kind: 'planeta enano',
+    tagline: 'El rojizo del cinturón de Kuiper',
+    color: '#c47a52',
+    texture: { type: 'rocky', colors: ['#c47a52', '#8a4f34'], craters: 6 },
+    scene: { size: 0.28, distance: 68, orbitSpeed: 0.032, rotationSpeed: 0.1, phase: 0.4, eccentricity: 0.16, periapsis: 3.0, inclination: 0.28 },
+    facts: [
+      { icon: '🔴', label: 'Color', value: 'Rojizo, por hielos con metano' },
+      { icon: '📅', label: 'Su año', value: '305 años de la Tierra' },
+      { icon: '🏷️', label: 'Su nombre', value: 'Un dios de la isla de Pascua' },
+      { icon: '❄️', label: 'Superficie', value: 'Cubierta de hielo helado' },
+    ],
+    story: [
+      { emoji: '🔴', title: '¡Soy Makemake!', text: 'Soy un planeta enano rojizo que vive lejísimos, en una región llena de cuerpos helados llamada cinturón de Kuiper.' },
+      { emoji: '🏷️', title: 'Mi nombre', text: 'Me llamo como un dios de la isla de Pascua, que creó a la humanidad según sus leyendas.' },
+      { emoji: '❄️', title: 'Puro hielo', text: 'Mi superficie está cubierta de hielos tan fríos que ni te lo imaginas.' },
+    ],
+    layers: [
+      { name: 'Corteza de metano', color: '#c47a52', radius: 1, description: 'Hielos de metano rojizos.' },
+      { name: 'Núcleo', color: '#7a4a34', radius: 0.55, description: 'Roca y hielo.' },
+    ],
+    moons: [],
+  },
+  {
+    id: 'haumea',
+    name: 'Haumea',
+    emoji: '🥚',
+    kind: 'planeta enano',
+    tagline: 'El que gira tan rápido que es un huevo',
+    color: '#e8e4dc',
+    texture: { type: 'rocky', colors: ['#e8e4dc', '#c0bcb2'], craters: 5, caps: '#ffffff' },
+    scene: { size: 0.3, distance: 64, orbitSpeed: 0.034, rotationSpeed: 0.6, phase: 5.0, eccentricity: 0.19, periapsis: 1.9, inclination: 0.24 },
+    facts: [
+      { icon: '🥚', label: 'Forma', value: 'Ovalada, ¡como un huevo o un balón de rugby!' },
+      { icon: '💨', label: 'Rapidísima', value: 'Da una vuelta sobre sí misma en 4 horas' },
+      { icon: '💍', label: 'Anillo', value: 'Tiene un anillo, ¡el primero en un enano!' },
+      { icon: '🌙', label: 'Lunas', value: 'Dos: Hiʻiaka y Namaka' },
+    ],
+    story: [
+      { emoji: '🥚', title: '¡Soy Haumea!', text: 'Soy un planeta enano con una forma rarísima: no soy redondo, soy ovalado como un huevo.' },
+      { emoji: '💨', title: 'La peonza', text: 'Giro tan pero tan rápido (una vuelta cada 4 horas) que la fuerza me ha estirado hasta quedar aplastada.' },
+      { emoji: '💍', title: 'Mi anillo', text: 'Tengo un anillo finito a mi alrededor y dos lunas. ¡Soy muy especial!' },
+    ],
+    layers: [
+      { name: 'Corteza de hielo', color: '#e8e4dc', radius: 1, description: 'Hielo de agua muy brillante.' },
+      { name: 'Núcleo rocoso', color: '#a8a49a', radius: 0.6, description: 'Roca en el centro.' },
+    ],
+    moons: [
+      { id: 'hiiaka', name: 'Hiʻiaka', emoji: '🌙', fact: 'La mayor de las dos lunas de Haumea.', size: 0.06, distance: 0.9, speed: 1.1, color: '#cfcfcf' },
+    ],
+  },
 ];
 
 /** Todos los cuerpos con historia propia del sistema solar. */

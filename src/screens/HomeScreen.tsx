@@ -6,6 +6,7 @@ export default function HomeScreen() {
   const goDinoIsland = useApp((s) => s.goDinoIsland);
   const goBody = useApp((s) => s.goBody);
   const goOcean = useApp((s) => s.goOcean);
+  const goMicro = useApp((s) => s.goMicro);
   const goPassport = useApp((s) => s.goPassport);
   const visited = useApp((s) => s.visited);
   const stamps = Object.keys(visited).length;
@@ -53,6 +54,11 @@ export default function HomeScreen() {
           <span className="chapter-emoji">🐳</span>
           <h3>El Océano</h3>
           <p>Sumérgete hasta lo más profundo</p>
+        </button>
+        <button className="chapter-card" onClick={goMicro}>
+          <span className="chapter-emoji">🔬</span>
+          <h3>El Mundo Microscópico</h3>
+          <p>Células, bacterias y virus de cerca</p>
         </button>
       </div>
       <button className="btn passport-btn" onClick={goPassport}>

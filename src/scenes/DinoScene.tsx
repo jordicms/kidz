@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+
 import { getDino, ERA_COLORS } from '../data/dinos';
 import type { Dino } from '../data/dinos';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
+import Controls from '../components/three/Controls';
 import DinoModel from '../components/three/DinoModel';
 import { StudioEnvironment } from '../components/three/Studio';
 import Effects from '../components/three/Effects';
@@ -81,7 +82,7 @@ export default function DinoScene() {
             </mesh>
             <StudioEnvironment tint="#bfe8ff" warm="#ffd9a0" intensity={0.6} />
             <TurntableDino dino={dino} />
-            <OrbitControls enablePan={false} minDistance={4} maxDistance={12} target={[0, 0.4, 0]} maxPolarAngle={Math.PI * 0.52} />
+            <Controls minDistance={4} maxDistance={12} target={[0, 0.4, 0]} maxPolarAngle={Math.PI * 0.52} />
             <AdaptiveQuality />
             <Effects ao={{ radius: 0.6, intensity: 1.6 }} />
           </Canvas>

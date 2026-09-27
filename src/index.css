@@ -70,6 +70,12 @@ body {
   pointer-events: auto;
 }
 
+.hud-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
 .hud-bottom {
   display: flex;
   justify-content: center;
@@ -604,6 +610,102 @@ body {
   max-width: 90%;
 }
 
+/* ---------- Mundo microscópico ---------- */
+/* Máscara del ocular: oscurece las esquinas como al mirar por un microscopio. */
+.micro-eyepiece {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 46%,
+    rgba(0, 0, 0, 0) 42%,
+    rgba(3, 8, 16, 0.45) 66%,
+    rgba(2, 5, 12, 0.88) 88%
+  );
+}
+
+/* Barra de escala, como en las microfotografías reales. */
+.micro-scalebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 10, 26, 0.72);
+  border: 2px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  pointer-events: auto;
+}
+
+.micro-scalebar .micro-bar {
+  display: block;
+  width: 54px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* Tarjeta de tamaño en la ficha del microbio. */
+.micro-size {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin: 10px 0;
+}
+
+.micro-size-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+
+.micro-size-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+/* ---------- Selector de eras (isla de dinosaurios) ---------- */
+.era-selector {
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  z-index: 11;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.era-selector .control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* ---------- Excavación de fósiles ---------- */
+.dig-hint {
+  background: rgba(8, 10, 26, 0.82);
+  color: #fff;
+  border: 2px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* ---------- Carga de escena (code-splitting) ---------- */
 .scene-loader {
   position: absolute;
@@ -812,6 +914,13 @@ body {
 
 .bh-overlay .btn {
   pointer-events: auto;
+}
+
+.star-branch {
+  color: var(--accent2);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* ---------- Viajes guiados ---------- */
@@ -1249,4 +1358,64 @@ body {
 .journey-sign.dim {
   background: rgba(20, 24, 40, 0.8);
   color: #cdd3f0;
+}
+/* ---------- Móvil en vertical ----------
+   En vertical el HUD se come mucha pantalla y los overlays se pisaban entre
+   ellos (el selector de eras tapaba el título). Aquí se compacta todo. */
+@media (max-width: 560px) {
+  .view-title {
+    font-size: 14px;
+    padding: 6px 10px;
+    max-width: 46vw;
+  }
+  .view-title small {
+    font-size: 10px;
+  }
+  .hud-actions {
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .hud-actions .btn {
+    font-size: 13px;
+    padding: 7px 11px;
+  }
+  .hud-actions .btn-round {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+  .view-title {
+    max-width: 42vw;
+  }
+  /* El selector de eras baja por debajo de la barra superior. */
+  .era-selector {
+    top: calc(104px + env(safe-area-inset-top));
+  }
+  .era-selector .chip-btn {
+    font-size: 11px;
+    padding: 4px 9px;
+  }
+  /* Controles inferiores más compactos, para dejar ver la escena. */
+  .ocean-controls,
+  .body-controls,
+  .bh-overlay {
+    gap: 6px;
+  }
+  .ocean-controls .control-hint,
+  .body-controls .control-hint {
+    font-size: 11px;
+  }
+  .dino-timeline {
+    font-size: 11px;
+  }
+}
+
+/* Pantallas muy bajas (móvil en horizontal): el HUD debe estorbar lo mínimo. */
+@media (max-height: 460px) {
+  .view-title small {
+    display: none;
+  }
+  .era-selector {
+    top: calc(54px + env(safe-area-inset-top));
+  }
 }

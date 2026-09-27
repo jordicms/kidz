@@ -1,7 +1,8 @@
 import { Suspense, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, Line, OrbitControls } from '@react-three/drei';
+import { Html, Line } from '@react-three/drei';
+import Controls from '../components/three/Controls';
 import { BODY_LAYERS, SYSTEMS, JOURNEYS, getOrgan } from '../data/body';
 import { useApp } from '../state/store';
 import { playHeartbeat } from '../utils/sound';
@@ -462,11 +463,8 @@ export default function BodyScene() {
             </group>
           </MeshTierContext.Provider>
           <HoloPlatform y={-1.735 + Y_OFFSET} radius={0.95} color={sys?.color ?? '#5fe3ff'} />
-          <OrbitControls
+          <Controls
             ref={controls as never}
-            makeDefault
-            enablePan={false}
-            enableDamping
             minDistance={1.6}
             maxDistance={9}
             target={[0, -0.38 + Y_OFFSET, 0]}

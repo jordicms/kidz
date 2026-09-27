@@ -1,7 +1,8 @@
 import { Suspense, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Html } from '@react-three/drei';
+import Controls from '../components/three/Controls';
 import { getOrgan, SYSTEMS } from '../data/body';
 import type { Organ } from '../data/types';
 import { useApp } from '../state/store';
@@ -99,7 +100,7 @@ export default function OrganScene() {
               </Suspense>
             </MeshTierContext.Provider>
             <HoloPlatform y={-1.45} radius={0.85} color={system?.color ?? '#5fe3ff'} />
-            <OrbitControls makeDefault enablePan={false} enableDamping minDistance={2.2} maxDistance={8} target={[0, 0, 0]} />
+            <Controls minDistance={2.2} maxDistance={8} target={[0, 0, 0]} />
             <AdaptiveQuality />
             <Effects ao={{ radius: 0.35, intensity: 2 }} bloomThreshold={0.8} />
           </Canvas>

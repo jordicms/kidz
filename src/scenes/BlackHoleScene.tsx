@@ -1,25 +1,33 @@
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Stars } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ToneMapping, ChromaticAberration } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
+import * as PP from 'postprocessing';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { createAccretionTexture, createGlowTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import { Lensing } from '../components/three/Lensing';
 import { AdaptiveQuality, IntroFly, SpaceBackground } from '../components/three/SceneExtras';
 
-/** Postprocesado del agujero negro: lente gravitacional + bloom + ACES. */
+/** Postprocesado del agujero negro: lente gravitacional + bloom + ACES.
+ *  La lente y la aberración (más pesadas) solo en gama media/alta. */
 function BlackHoleEffects() {
   const quality = useApp((s) => s.quality);
-  const size = useThree((s) => s.size);
   if (!quality.postprocessing) return null;
+  const heavy = quality.tier !== 'low';
   return (
-    <EffectComposer multisampling={quality.antialias ? 4 : 0}>
-      <Lensing radius={0.2} strength={0.14} aspect={size.width / size.height} />
-      <Bloom intensity={quality.bloomIntensity} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.7} />
-      <Vignette eskil={false} offset={0.25} darkness={0.75} />
+    <EffectComposer multisampling={quality.antialias ? 2 : 0}>
+      {heavy ? <Lensing radius={0.2} strength={0.14} ringGain={2.6} /> : <></>}
+      <Bloom intensity={quality.bloomIntensity * 1.5} luminanceThreshold={0.4} luminanceSmoothing={0.3} mipmapBlur radius={0.8} />
+      {heavy ? (
+        <ChromaticAberration offset={[0.0011, 0.0011]} radialModulation modulationOffset={0.6} blendFunction={PP.BlendFunction.NORMAL} />
+      ) : (
+        <></>
+      )}
+      <Vignette eskil={false} offset={0.22} darkness={0.8} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
   );
@@ -48,11 +56,12 @@ function AccretionDisk() {
       const ang = Math.atan2(y, x);
       uv.setXY(i, (r - DISK_INNER) / (DISK_OUTER - DISK_INNER), (ang + Math.PI) / (Math.PI * 2));
       // Doppler relativista: el lado que se acerca es más brillante Y más azul.
+      // Colores en HDR (>1) para que el bloom irradie con fuerza.
       const d = 0.5 + 0.5 * Math.cos(ang);
-      const b = 0.4 + 1.35 * d;
+      const b = 0.5 + 2.4 * d;
       colors[i * 3] = b;
-      colors[i * 3 + 1] = b * (0.8 + 0.2 * d);
-      colors[i * 3 + 2] = b * (0.55 + 0.5 * d);
+      colors[i * 3 + 1] = b * (0.78 + 0.22 * d);
+      colors[i * 3 + 2] = b * (0.5 + 0.55 * d);
     }
     uv.needsUpdate = true;
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -124,6 +133,7 @@ function Infall({ count }: { count: number }) {
 }
 
 function BlackHole() {
+  const quality = useApp((s) => s.quality);
   const photonGlow = useMemo(() => createGlowTexture('photon-ring', 'rgba(255,220,170,1)'), []);
   const halo = useMemo(() => createGlowTexture('bh-halo', 'rgba(255,150,60,0.7)'), []);
 
@@ -165,7 +175,7 @@ function BlackHole() {
         </mesh>
       ))}
       <AccretionDisk />
-      <Infall count={420} />
+      <Infall count={scaleCount(420, quality, 120)} />
       {/* Halos */}
       <sprite scale={[13, 13, 1]}>
         <spriteMaterial map={halo} transparent opacity={0.55} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
@@ -186,13 +196,13 @@ export default function BlackHoleScene() {
     <div className="scene-canvas">
       <Canvas camera={{ position: [0, 3.5, 10], fov: 55 }} dpr={quality.dpr} gl={{ antialias: quality.antialias }}>
         <color attach="background" args={['#01010a']} />
-        <SpaceBackground keys={['universe-bg', 'stars']} />
+        {/* 8K solo en gama alta: en móvil agota la memoria GPU y tumba WebGL. */}
+        <SpaceBackground keys={quality.tier === 'high' ? ['universe-bg', 'stars'] : ['stars']} />
         <Stars radius={120} depth={60} count={scaleCount(3000, quality, 800)} factor={4} saturation={0.3} fade speed={0.4} />
         <ambientLight intensity={0.2} />
         <BlackHole />
-        <OrbitControls
+        <Controls
           ref={controlsRef as never}
-          enablePan={false}
           minDistance={5}
           maxDistance={30}
           autoRotate

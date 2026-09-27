@@ -1,20 +1,14 @@
 {
-  "_comment": "Modelos anatómicos reales (GLB). Ejecuta `npm run anatomy` para descargarlos a src/assets/anatomy/<key>.glb. Rellena cada `url` con un enlace DIRECTO a un .glb. La app usa el modelo real si existe y, si no, la anatomía procedural. key = id del órgano (corazon/pulmones/cerebro/estomago/intestinos/huesos/musculos) o `cuerpo` (figura completa). Las entradas con url vacía se omiten.",
-  "_fuentes": [
-    "BodyParts3D / Anatomography (CC BY-SA 2.1 JP): lifesciencedb.jp/bp3d — exporta a glTF con Blender.",
-    "NIH 3D (3d.nih.gov): muchos modelos anatómicos CC0/dominio público; convierte STL→GLB con Blender o gltf-transform.",
-    "Z-Anatomy (CC BY-SA): z-anatomy.com — abre el .blend y exporta la pieza a .glb.",
-    "Sketchfab: filtra 'Downloadable' + licencias CC; revisa la licencia de cada modelo.",
-    "Optimiza siempre con gltf-transform (draco/meshopt) para que pesen poco."
-  ],
+  "_comment": "Modelos anatómicos reales (GLB). DOS formas de usarlo: (A) descarga el .glb a mano de la fuente indicada en cada pieza y guárdalo en src/assets/anatomy/<key>.glb (¡ese nombre exacto!); o (B) pega una URL directa a .glb en `url` y ejecuta `npm run anatomy`. La app usa el modelo real si existe y, si no, la anatomía procedural. Convierte STL/.blend a .glb con Blender o gltf-transform y optimiza (Draco).",
+  "_recomendado": "Human Reference Atlas (humanatlas.io/3d-reference-library): órganos médicos reales en GLB, CC BY 4.0 (atribución: HuBMAP / HRA). Tiene corazón, pulmón, cerebro e intestino grueso con botón de descarga GLB. Para esqueleto/estómago/músculos usa NIH 3D (3d.nih.gov, muchos CC0) o Sketchfab (filtro Downloadable + CC).",
   "models": [
-    { "key": "cuerpo", "url": "", "credit": "", "license": "verify", "uso": "figura completa (piel/músculo)" },
-    { "key": "huesos", "url": "", "credit": "", "license": "verify", "uso": "esqueleto" },
-    { "key": "musculos", "url": "", "credit": "", "license": "verify", "uso": "sistema muscular" },
-    { "key": "corazon", "url": "", "credit": "", "license": "verify", "uso": "corazón" },
-    { "key": "pulmones", "url": "", "credit": "", "license": "verify", "uso": "pulmones" },
-    { "key": "cerebro", "url": "", "credit": "", "license": "verify", "uso": "cerebro" },
-    { "key": "estomago", "url": "", "credit": "", "license": "verify", "uso": "estómago" },
-    { "key": "intestinos", "url": "", "credit": "", "license": "verify", "uso": "intestinos" }
+    { "key": "corazon", "url": "", "license": "CC-BY-4.0", "fuente": "HRA 3D Reference Library → 'Heart' → Download GLB. Guárdalo como corazon.glb", "credit": "HuBMAP / Human Reference Atlas · CC BY 4.0" },
+    { "key": "pulmones", "url": "", "license": "CC-BY-4.0", "fuente": "HRA 3D Reference Library → 'Lung' → Download GLB. Guárdalo como pulmones.glb", "credit": "HuBMAP / Human Reference Atlas · CC BY 4.0" },
+    { "key": "cerebro", "url": "", "license": "CC-BY-4.0", "fuente": "HRA 3D Reference Library → 'Brain' → Download GLB. Guárdalo como cerebro.glb", "credit": "HuBMAP / Human Reference Atlas · CC BY 4.0" },
+    { "key": "intestinos", "url": "", "license": "CC-BY-4.0", "fuente": "HRA 3D Reference Library → 'Large intestine' → Download GLB. Guárdalo como intestinos.glb", "credit": "HuBMAP / Human Reference Atlas · CC BY 4.0" },
+    { "key": "estomago", "url": "", "license": "verify", "fuente": "NIH 3D (3d.nih.gov, busca 'stomach') o Sketchfab (Downloadable + CC). Convierte a .glb y guárdalo como estomago.glb", "credit": "" },
+    { "key": "huesos", "url": "", "license": "verify", "fuente": "NIH 3D 'human skeleton' (varios CC0) o Sketchfab CC. Guárdalo como huesos.glb", "credit": "" },
+    { "key": "musculos", "url": "", "license": "verify", "fuente": "Sketchfab 'muscular system' (Downloadable + CC) o BodyParts3D. Guárdalo como musculos.glb", "credit": "" },
+    { "key": "cuerpo", "url": "", "license": "verify", "fuente": "Opcional: figura/cuerpo completo. Sketchfab CC o MakeHuman (CC0) exportado a .glb. Guárdalo como cuerpo.glb", "credit": "" }
   ]
 }

@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls, Stars } from '@react-three/drei';
+import { Html, Stars } from '@react-three/drei';
 import { getBody } from '../data/solarSystem';
 import type { Body, Moon } from '../data/types';
 import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { getPhoto } from '../utils/photos';
 import { createLayerTexture, createMoonTexture } from '../utils/textures';
+import Controls from '../components/three/Controls';
 import CelestialBody from '../components/three/CelestialBody';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality, SpaceBackground } from '../components/three/SceneExtras';
@@ -76,6 +77,7 @@ function DetailMoon({ moon, scale }: { moon: Moon; scale: number }) {
 export default function PlanetScene() {
   const bodyId = useApp((s) => s.bodyId);
   const quality = useApp((s) => s.quality);
+  const goStarLife = useApp((s) => s.goStarLife);
   const [interior, setInterior] = useState(false);
   const body = bodyId ? getBody(bodyId) : undefined;
   if (!body) return null;
@@ -108,7 +110,7 @@ export default function PlanetScene() {
                 ))}
               </>
             )}
-            <OrbitControls enablePan={false} minDistance={4} maxDistance={16} />
+            <Controls minDistance={4} maxDistance={16} />
             <AdaptiveQuality />
             <Effects />
           </Canvas>
@@ -129,6 +131,11 @@ export default function PlanetScene() {
           <button className="btn btn-accent" onClick={() => setInterior(!interior)}>
             {interior ? '🌍 Ver por fuera' : '🔬 Ver el interior'}
           </button>
+          {isSun && (
+            <button className="btn" onClick={goStarLife}>
+              🌟 Vida de las estrellas
+            </button>
+          )}
         </div>
       </div>
 
