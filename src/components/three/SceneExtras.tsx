@@ -93,6 +93,9 @@ export function SpaceBackground({ keys = ['stars'] }: { keys?: string[] }) {
  */
 export function AdaptiveQuality() {
   const degrade = useApp((s) => s.degradeQuality);
+  const three = useThree();
+  // Depuración en desarrollo: window.__three da acceso a cámara/escena (QA visual).
+  if (import.meta.env.DEV) (window as unknown as { __three: unknown }).__three = three;
   return <PerformanceMonitor flipflops={2} onDecline={degrade} onFallback={degrade} />;
 }
 

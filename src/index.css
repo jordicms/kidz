@@ -1025,3 +1025,73 @@ body {
     border-radius: var(--radius) var(--radius) 0 0;
   }
 }
+
+/* ---------- Cuerpo humano: etiquetas de anatomía (callouts) ---------- */
+.body-callout {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: #eafcff;
+  background: linear-gradient(135deg, rgba(10, 30, 50, 0.88), rgba(18, 12, 40, 0.88));
+  border: 1.5px solid rgba(143, 246, 255, 0.55);
+  border-radius: 999px;
+  padding: 4px 11px 4px 8px;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(95, 242, 255, 0.25);
+  backdrop-filter: blur(6px);
+  animation: callout-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.body-callout.left {
+  transform: translateX(-40%);
+}
+.body-callout.right {
+  transform: translateX(40%);
+}
+.body-callout:hover {
+  background: linear-gradient(135deg, #ff8c42, #ffb627);
+  color: #2b1700;
+  border-color: #ffd166;
+}
+@keyframes callout-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.body-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: 15px;
+  color: #bff4ff;
+  background: rgba(8, 20, 34, 0.8);
+  border: 1.5px solid rgba(143, 246, 255, 0.4);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #5ff2ff;
+  box-shadow: 0 0 10px #5ff2ff;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  50% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+}

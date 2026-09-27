@@ -150,3 +150,8 @@ export const useApp = create<AppState>((set) => ({
       return next ? { quality: PRESETS[next] } : {};
     }),
 }));
+
+// Acceso de depuración en desarrollo (QA visual): window.__app.getState().goBody()
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as { __app: typeof useApp }).__app = useApp;
+}

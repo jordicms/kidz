@@ -17,6 +17,7 @@ export const SYSTEMS: BodySystem[] = [
   { id: 'respiratorio', name: 'Respiratorio', emoji: '🫁', color: '#7fb3ff' },
   { id: 'digestivo', name: 'Digestivo', emoji: '🍎', color: '#e8a23b' },
   { id: 'nervioso', name: 'Nervioso', emoji: '🧠', color: '#d18ad1' },
+  { id: 'excretor', name: 'Excretor', emoji: '💧', color: '#e9c46a' },
 ];
 
 export const ORGANS: Organ[] = [
@@ -26,7 +27,7 @@ export const ORGANS: Organ[] = [
     emoji: '🫀',
     system: 'circulatorio',
     color: '#d8324a',
-    position: [-0.1, 0.52, 0.16],
+    position: [0.05, 0.56, 0.1],
     tagline: 'La bomba que nunca descansa',
     facts: [
       { icon: '💓', label: 'Latidos', value: '¡Unas 100.000 veces al día!' },
@@ -63,7 +64,7 @@ export const ORGANS: Organ[] = [
     emoji: '🫁',
     system: 'respiratorio',
     color: '#e58aa0',
-    position: [0, 0.58, 0.05],
+    position: [0.16, 0.72, 0.02],
     tagline: 'Dos globos que te dan aire',
     facts: [
       { icon: '🌬️', label: 'Respiras', value: 'Unas 20.000 veces al día' },
@@ -84,7 +85,7 @@ export const ORGANS: Organ[] = [
     emoji: '🧠',
     system: 'nervioso',
     color: '#e0a6d6',
-    position: [0, 1.46, 0.02],
+    position: [0.05, 1.6, 0.04],
     tagline: 'El jefe que controla todo',
     facts: [
       { icon: '🎮', label: 'Su trabajo', value: 'Controla todo tu cuerpo' },
@@ -105,7 +106,7 @@ export const ORGANS: Organ[] = [
     emoji: '🍎',
     system: 'digestivo',
     color: '#e8a23b',
-    position: [0.12, 0.06, 0.2],
+    position: [0.15, 0.22, 0.1],
     tagline: 'La bolsa donde empieza la digestión',
     facts: [
       { icon: '🥣', label: 'Cómo es', value: 'Una bolsa elástica que se estira' },
@@ -126,7 +127,7 @@ export const ORGANS: Organ[] = [
     emoji: '🌀',
     system: 'digestivo',
     color: '#d99a7a',
-    position: [0, -0.2, 0.18],
+    position: [-0.06, -0.14, 0.12],
     tagline: 'El túnel larguísimo de la digestión',
     facts: [
       { icon: '📏', label: 'Largo', value: '¡El delgado mide unos 6-7 metros!' },
@@ -139,6 +140,48 @@ export const ORGANS: Organ[] = [
       { emoji: '🥦', title: 'Intestino delgado', text: 'Aquí se cogen las vitaminas y la energía de la comida y pasan a la sangre. Es la parte más larga y enrollada.' },
       { emoji: '💧', title: 'Intestino grueso', text: 'Rodea a los demás como un marco. Recupera el agua de lo que ya no sirve antes de despedirlo.' },
       { emoji: '🦠', title: 'Bichitos buenos', text: 'Millones de bacterias amigas viven dentro y nos ayudan a digerir. ¡Cuídalas comiendo fruta y verdura!' },
+    ],
+  },
+  {
+    id: 'higado',
+    name: 'El Hígado',
+    emoji: '🟤',
+    system: 'digestivo',
+    color: '#9a3a2e',
+    position: [-0.14, 0.36, 0.08],
+    tagline: 'La fábrica química del cuerpo',
+    facts: [
+      { icon: '🏭', label: 'Su trabajo', value: 'Limpia la sangre y guarda energía' },
+      { icon: '⚖️', label: 'Peso', value: 'El órgano interno más grande: ¡como un melón!' },
+      { icon: '🔧', label: 'Trabajos', value: '¡Hace más de 500 tareas distintas!' },
+      { icon: '🦎', label: 'Superpoder', value: 'Puede volver a crecer si se daña un poco' },
+    ],
+    story: [
+      { emoji: '🟤', title: '¡Hola, soy el hígado!', text: 'Vivo en tu barriga, arriba a la derecha, justo debajo de los pulmones. Soy grande, blandito y de color marrón rojizo.' },
+      { emoji: '🧹', title: 'Limpio la sangre', text: 'Toda la sangre que viene del intestino pasa por mí. Yo quito lo que no es bueno para el cuerpo, como un filtro mágico.' },
+      { emoji: '🔋', title: 'Guardo energía', text: 'Guardo azúcar como si fuera una pila. Cuando juegas mucho y te cansas, te doy energía de reserva.' },
+      { emoji: '🟢', title: 'Mi amiga la vesícula', text: 'Fabrico un jugo verde, la bilis, que ayuda a deshacer la grasa de la comida. Lo guardo en una bolsita llamada vesícula.' },
+    ],
+  },
+  {
+    id: 'rinones',
+    name: 'Los Riñones',
+    emoji: '🫘',
+    system: 'excretor',
+    color: '#a8433a',
+    position: [0.1, 0.15, -0.08],
+    tagline: 'Dos filtros con forma de judía',
+    facts: [
+      { icon: '🫘', label: 'Forma', value: 'Como dos judías del tamaño de tu puño' },
+      { icon: '🚰', label: 'Filtran', value: 'Limpian toda tu sangre ¡muchas veces al día!' },
+      { icon: '💧', label: 'Fabrican', value: 'El pis, con el agua y lo que sobra' },
+      { icon: '🥤', label: 'Les encanta', value: 'Que bebas agua' },
+    ],
+    story: [
+      { emoji: '🫘', title: '¡Somos los riñones!', text: 'Somos dos y vivimos en tu espalda, a los lados de la columna, un poco por encima de la cintura.' },
+      { emoji: '🚰', title: 'Filtros de sangre', text: 'La sangre entra en nosotros sucia y sale limpia. Separamos el agua que sobra y las cosas que el cuerpo no necesita.' },
+      { emoji: '💧', title: 'Así se hace el pis', text: 'Con lo que sobra hacemos el pis. Baja por dos tubitos, los uréteres, hasta la vejiga, que lo guarda hasta que vas al baño.' },
+      { emoji: '🥤', title: 'Bebe agua', text: 'Beber agua nos ayuda a trabajar bien. ¡Si tu pis es clarito, lo estás haciendo genial!' },
     ],
   },
   {
@@ -242,7 +285,7 @@ export function getJourney(id: string): Journey | undefined {
 }
 
 /** Órganos discretos que se muestran dentro de la figura (no capas enteras). */
-export const INNER_ORGAN_IDS = ['corazon', 'pulmones', 'cerebro', 'estomago', 'intestinos'] as const;
+export const INNER_ORGAN_IDS = ['corazon', 'pulmones', 'cerebro', 'estomago', 'higado', 'rinones', 'intestinos'] as const;
 
 /** Órgano representativo de cada sistema (para el toggle de sistemas). */
 export const SYSTEM_ORGAN: Record<string, string> = {
@@ -252,4 +295,5 @@ export const SYSTEM_ORGAN: Record<string, string> = {
   digestivo: 'estomago',
   oseo: 'huesos',
   muscular: 'musculos',
+  excretor: 'rinones',
 };
