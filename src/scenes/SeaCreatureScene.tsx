@@ -77,7 +77,7 @@ export default function SeaCreatureScene() {
             <Turntable creature={creature} />
             <Controls minDistance={3} maxDistance={10} target={[0, 0, 0]} />
             <AdaptiveQuality />
-            <Effects />
+            <Effects ao={{ radius: 0.5, intensity: 1.4 }} />
           </Canvas>
         </div>
       </div>

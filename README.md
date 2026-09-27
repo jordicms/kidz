@@ -36,6 +36,32 @@ la app no descarga ninguna imagen y funciona 100% offline.
   **procedural low-poly** para que el prototipo funcione offline sin assets.
   Cómo añadir modelos CC0 reales: ver [`public/models/README.md`](public/models/README.md).
 
+## Capítulo 3: El Cuerpo Humano 🫀 (motor anatómico SDF)
+
+- **Anatomía esculpida con SDF** (`src/components/three/body/`): cuerpo, órganos
+  (corazón, pulmones con árbol bronquial, cerebro con circunvoluciones, estómago,
+  hígado, riñones, intestinos con haustras), cráneo y pelvis se describen como
+  campos de distancia con uniones suaves y se poligonizan con *surface nets*
+  (`src/utils/sdf.ts`) en mallas lisas con color por vértice y oclusión ambiental
+  horneada. Se generan en un **pool de Web Workers** (sin tirones) y se cachean.
+- **Escáner holográfico**: al cambiar de capa (piel → grasa → músculos → huesos →
+  órganos) o de sistema, un anillo de luz barre el cuerpo y "pela" la capa en
+  directo (corte en shader). Modo **rayos X** con silueta Fresnel.
+- **Sistemas vivos**: la sangre circula por arterias (rojo) y venas (azul), los
+  impulsos viajan por los nervios, el aire entra y sale de los pulmones y la
+  comida recorre el tubo digestivo. Etiquetas tipo libro de anatomía.
+- **Viajes por dentro** (`src/scenes/journey/`): cada paso es una estación
+  reconocible (dientes y lengua, esófago con peristaltismo, estómago con jugos,
+  vellosidades, bacterias, tráquea con anillos, bifurcación de bronquios,
+  alvéolos con capilares...). El protagonista tiene carita y cambia a la vista
+  (el glóbulo se pone rojo brillante al cargar O₂), las partículas muestran los
+  intercambios y un **minimapa del cuerpo** enseña dónde estás.
+- **Iluminación de estudio procedural** (`src/components/three/Studio.tsx`):
+  entorno de softboxes (sin HDRI, offline), fondo degradado y plataforma.
+- **Postprocesado ampliado** (`Effects.tsx`): N8AO (oclusión ambiental), SMAA,
+  profundidad de campo y aberración cromática opcionales por escena.
+- Si se añaden modelos GLB reales (`npm run anatomy`), la ficha del órgano los usa.
+
 ## Efectos visuales y rendimiento
 
 - **Postprocesado** (`@react-three/postprocessing`): bloom + viñeta para que el
