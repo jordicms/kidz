@@ -6,6 +6,7 @@ import { getCreature, ZONES } from '../data/ocean';
 import type { SeaCreature } from '../data/ocean';
 import { useApp } from '../state/store';
 import SeaCreatureModel from '../components/three/SeaCreatureModel';
+import { StudioEnvironment } from '../components/three/Studio';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
@@ -44,10 +45,11 @@ export default function SeaCreatureScene() {
             <hemisphereLight args={['#bfe3ff', '#0a2a4a', 0.7]} />
             <directionalLight position={[5, 7, 4]} intensity={creature.zone === 'abismo' ? 0.5 : 1.8} color="#dff2ff" />
             <ambientLight intensity={creature.zone === 'abismo' ? 0.15 : 0.35} />
+            <StudioEnvironment tint="#7fd8ff" warm="#a0c8ff" intensity={creature.zone === 'abismo' ? 0.25 : 0.6} />
             <Turntable creature={creature} />
             <OrbitControls enablePan={false} minDistance={3} maxDistance={10} target={[0, 0, 0]} />
             <AdaptiveQuality />
-            <Effects />
+            <Effects ao={{ radius: 0.5, intensity: 1.4 }} />
           </Canvas>
         </div>
       </div>

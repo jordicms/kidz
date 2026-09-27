@@ -8,6 +8,7 @@ import { useApp } from '../state/store';
 import { scaleCount } from '../utils/quality';
 import { playRoar, roarPitchFor } from '../utils/sound';
 import DinoModel from '../components/three/DinoModel';
+import { StudioEnvironment } from '../components/three/Studio';
 import Effects from '../components/three/Effects';
 import { AdaptiveQuality } from '../components/three/SceneExtras';
 import StoryPager from '../components/ui/StoryPager';
@@ -78,10 +79,11 @@ export default function DinoScene() {
               <circleGeometry args={[8, scaleCount(48, quality, 16)]} />
               <meshStandardMaterial color="#3f6a33" flatShading roughness={1} />
             </mesh>
+            <StudioEnvironment tint="#bfe8ff" warm="#ffd9a0" intensity={0.6} />
             <TurntableDino dino={dino} />
             <OrbitControls enablePan={false} minDistance={4} maxDistance={12} target={[0, 0.4, 0]} maxPolarAngle={Math.PI * 0.52} />
             <AdaptiveQuality />
-            <Effects />
+            <Effects ao={{ radius: 0.6, intensity: 1.6 }} />
           </Canvas>
         </div>
       </div>
